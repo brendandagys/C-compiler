@@ -1,5 +1,5 @@
-scanner: main.c scan.c
-	cc -o scanner -g main.c scan.c
+bin/b: expressions.c interpreter.c main.c scan.c tree.c
+	gcc -o bin/b expressions.c interpreter.c main.c scan.c tree.c
 
 clean:
-	rm -f scanner *.o
+	rm -f bin/b *.o

@@ -5,7 +5,6 @@
 #undef extern_
 
 #include "declarations.h"
-
 #include <errno.h>
 
 // Compiler set-up and top-level execution
@@ -24,28 +23,11 @@ static void usage(char *prog)
   exit(1);
 }
 
-// List of printable tokens
-char *tokstr[] = {"+", "-", "*", "/", "intlit"};
-
-// Read in all tokens from the input file and print their details
-static void scanfile()
-{
-  struct token T;
-
-  while (scan(&T))
-  {
-    printf("Token %s", tokstr[T.token]);
-
-    if (T.token == T_INTLIT)
-      printf(", value %d", T.intvalue);
-
-    printf("\n");
-  }
-}
-
 // Open/scan the file and its tokens
 int main(int argc, char *argv[])
 {
+  struct ASTnode *n;
+
   if (argc != 2)
     usage(argv[0]);
 
@@ -57,7 +39,9 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  scanfile();
+  scan(&Token);                    // Get the first token from the input
+  n = binexpr();                   // Parse the expression
+  printf("%d\n", interpretAST(n)); // Calculate the final result
 
   return 0;
 }
