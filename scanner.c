@@ -28,6 +28,7 @@ static int next(void)
 
   if ('\n' == c)
     Line++;
+
   return c;
 }
 
