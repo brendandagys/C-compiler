@@ -17,11 +17,12 @@ int interpretAST(struct ASTnode *n)
   if (n->right)
     rightval = interpretAST(n->right);
 
-  // Log node
+#ifdef DEBUG
   if (n->op == A_INTLIT)
     printf("int %d\n", n->intvalue);
   else
     printf("%d %s %d\n", leftval, ASTop[n->op], rightval);
+#endif
 
   switch (n->op)
   {

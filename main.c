@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   }
 
   scan(&Token);                    // Get the first token from the input
-  n = binexpr();                   // Parse the expression
+  n = binexpr(0);                  // Parse the expression
   printf("%d\n", interpretAST(n)); // Calculate the final result
 
   return 0;
