@@ -1,18 +1,11 @@
 ```
-expression: number
-          | expression '*' expression
-          | expression '/' expression
-          | expression '+' expression
-          | expression '-' expression
-          ;
+statements: statement
+     | statement statements
+     ;
 
-number:  T_INTLIT
-         ;
-```
+statement: 'print' expression ';'
+     ;
 
-to
-
-```
 expression: additive_expression
     ;
 
@@ -29,5 +22,5 @@ multiplicative_expression:
     ;
 
 number:  T_INTLIT
-         ;
+    ;
 ```
