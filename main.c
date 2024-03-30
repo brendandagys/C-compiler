@@ -39,9 +39,19 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  if ((Outfile = fopen("out.s", "w")) == NULL)
+  {
+    fprintf(stderr, "Unable to create `out.s`: %s\n", strerror(errno));
+    exit(1);
+  }
+
   scan(&Token);                    // Get the first token from the input
   n = binexpr(0);                  // Parse the expression
   printf("%d\n", interpretAST(n)); // Calculate the final result
+  generatecode(n);
+
+  fclose(Infile);
+  fclose(Outfile);
 
   return 0;
 }
