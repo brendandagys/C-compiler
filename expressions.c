@@ -42,8 +42,8 @@ int arithop(int tokentype)
 }
 
 // Operator precedence for each token
-// T_EOF T_PLUS T_MINUS T_STAR T_SLASH T_INTLIT
-static int OpPrec[] = {0, 10, 10, 20, 20, 0};
+// T_EOF T_PLUS T_MINUS T_STAR T_SLASH T_INTLIT T_SEMI T_PRINT
+static int OpPrec[8] = {0, 10, 10, 20, 20, 0, 0, 0};
 
 // Check that we have a binary operator and return its precedence
 static int op_precedence(int tokentype)
@@ -68,7 +68,7 @@ struct ASTnode *binexpr(int ptp)
   left = primary();
 
   tokentype = Token.token;
-  if (tokentype == T_EOF)
+  if (tokentype == T_SEMI)
     return left;
 
   // While current token precedence > previous token precedence...
@@ -85,7 +85,7 @@ struct ASTnode *binexpr(int ptp)
 
     // Update details of current token. If none left, return the left node.
     tokentype = Token.token;
-    if (tokentype == T_EOF)
+    if (tokentype == T_SEMI)
       return left;
   }
 

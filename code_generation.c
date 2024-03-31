@@ -5,7 +5,7 @@
 // Generic code generator
 
 // Given an AST, recursively generate assembly code
-static int genAST(struct ASTnode *n)
+int genAST(struct ASTnode *n)
 {
   int leftreg, rightreg;
 
@@ -32,10 +32,22 @@ static int genAST(struct ASTnode *n)
   }
 }
 
-void generatecode(struct ASTnode *n)
+void genpreamble()
 {
   cgpreamble();
-  int reg = genAST(n);
-  cgprintint(reg);
+}
+
+void genpostamble()
+{
   cgpostamble();
+}
+
+void genfreeregs()
+{
+  freeall_registers();
+}
+
+void genprintint(int reg)
+{
+  cgprintint(reg);
 }

@@ -59,7 +59,7 @@ void cgpreamble(void)
   |        Lower Addresses         |
   +--------------------------------+
 
-  Stack fills down...
+  Stack fills downward...
   */
 
   fputs(

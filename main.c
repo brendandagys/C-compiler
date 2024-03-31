@@ -26,8 +26,6 @@ static void usage(char *prog)
 // Open/scan the file and its tokens
 int main(int argc, char *argv[])
 {
-  struct ASTnode *n;
-
   if (argc != 2)
     usage(argv[0]);
 
@@ -45,10 +43,11 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  scan(&Token);                    // Get the first token from the input
-  n = binexpr(0);                  // Parse the expression
-  printf("%d\n", interpretAST(n)); // Calculate the final result
-  generatecode(n);
+  scan(&Token); // Get the first token from the input
+
+  genpreamble();
+  statements();
+  genpostamble();
 
   fclose(Infile);
   fclose(Outfile);
