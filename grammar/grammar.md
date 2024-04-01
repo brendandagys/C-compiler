@@ -1,26 +1,33 @@
 ```
-statements: statement
-     | statement statements
-     ;
+statements: 
+            statement
+    |       statement statements
+    ;
 
-statement: 'print' expression ';'
-     ;
+statement: 
+           'print' expression ';'
+    |      'int'   identifier ';'
+    |      identifier '=' expression ';'
+    ;
+
+identifier: T_IDENT
+    ;
 
 expression: additive_expression
     ;
 
 additive_expression:
-      multiplicative_expression
-    | additive_expression '+' multiplicative_expression
-    | additive_expression '-' multiplicative_expression
+           multiplicative_expression
+    |      additive_expression '+' multiplicative_expression
+    |      additive_expression '-' multiplicative_expression
     ;
 
 multiplicative_expression:
-      number
-    | number '*' multiplicative_expression
-    | number '/' multiplicative_expression
+           number
+    |      number '*' multiplicative_expression
+    |      number '/' multiplicative_expression
     ;
 
-number:  T_INTLIT
+number: T_INTLIT
     ;
 ```

@@ -5,7 +5,8 @@
 
 // Struct and enum definitions
 
-#define TEXTLEN 512 // Length of symbols in input
+#define TEXTLEN 512   // Length of symbols in input
+#define NSYMBOLS 1024 // Number of symbol table entries
 
 // Token types
 enum
@@ -17,7 +18,11 @@ enum
   T_SLASH,
   T_INTLIT,
   T_SEMI,
-  T_PRINT
+  T_EQUALS,
+  T_IDENT,
+  // Keywords
+  T_PRINT,
+  T_INT,
 };
 
 struct token
@@ -26,20 +31,33 @@ struct token
   int intvalue; // For `T_INTLIT`
 };
 
-// AST node types
+// AST node types (op)
 enum
 {
   A_ADD,
   A_SUBTRACT,
   A_MULTIPLY,
   A_DIVIDE,
-  A_INTLIT
+  A_INTLIT,
+  A_IDENT,
+  A_LVIDENT,
+  A_ASSIGN
 };
 
 struct ASTnode
 {
-  int op;               // Operation to be performed on this tree
+  int op;               // "Operation" to be performed on this tree
   struct ASTnode *left; // Left and right child trees
   struct ASTnode *right;
-  int intvalue; // For `A_INTLIT`
+  union
+  {
+    int intvalue; // For `A_INTLIT`, the integer value
+    int id;       // For `A_IDENT`, the symbol slot number
+  } v;
+};
+
+// Symbol table structure
+struct symtable
+{
+  char *name; // Name of a symbol
 };

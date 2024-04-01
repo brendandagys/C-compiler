@@ -4,22 +4,31 @@
 
 // Parsing of expressions with Pratt parsing
 
-// For an INTLIT token (primary factor) only, make/return a leaf AST node
-// for it and scan in the next token. Otherwise, syntax error.
+// Parse a primary factor and return an AST node representing it
 static struct ASTnode *primary(void)
 {
   struct ASTnode *n;
+  int id;
 
   switch (Token.token)
   {
   case T_INTLIT:
     n = mkastleaf(A_INTLIT, Token.intvalue);
-    scan(&Token);
-    return n;
+    break;
+  case T_IDENT:
+    id = findglob(Text);
+    if (id == -1)
+      fatals("Unknown variable", Text);
+
+    n = mkastleaf(A_IDENT, id); // ID is index in global symbol table
+    break;
   default:
-    fprintf(stderr, "Syntax error on line %d, token %d\n", Line, Token.token);
-    exit(1);
+    fatald("Syntax error, token", Token.token);
   }
+
+  scan(&Token);
+
+  return n;
 }
 
 // Convert a binary operator token into an AST operation
@@ -36,14 +45,14 @@ int arithop(int tokentype)
   case T_SLASH:
     return A_DIVIDE;
   default:
-    fprintf(stderr, "Syntax error on line %d, token %d\n", Line, tokentype);
-    exit(1);
+    fatald("Syntax error, token", tokentype);
+    __builtin_unreachable();
   }
 }
 
 // Operator precedence for each token
 // T_EOF T_PLUS T_MINUS T_STAR T_SLASH T_INTLIT T_SEMI T_PRINT
-static int OpPrec[8] = {0, 10, 10, 20, 20, 0, 0, 0};
+static int OpPrec[] = {0, 10, 10, 20, 20, 0};
 
 // Check that we have a binary operator and return its precedence
 static int op_precedence(int tokentype)
@@ -51,8 +60,7 @@ static int op_precedence(int tokentype)
   int prec = OpPrec[tokentype];
   if (prec == 0)
   {
-    fprintf(stderr, "Syntax error on line %d, token %d\n", Line, tokentype);
-    exit(1);
+    fatald("Syntax error, token", tokentype);
   }
   return prec;
 }
@@ -64,7 +72,7 @@ struct ASTnode *binexpr(int ptp)
   struct ASTnode *left, *right;
   int tokentype;
 
-  // Get the integer literal on the left. Fetch next token at the same time.
+  // Get primary tree on the left. Fetch next token at the same time.
   left = primary();
 
   tokentype = Token.token;
@@ -74,7 +82,7 @@ struct ASTnode *binexpr(int ptp)
   // While current token precedence > previous token precedence...
   while (op_precedence(tokentype) > ptp)
   {
-    // Read in the next integer literal
+    // Read in the next integer literal or identifier
     scan(&Token);
 
     // Recursively build a sub-tree with binexpr(<token precedence>)

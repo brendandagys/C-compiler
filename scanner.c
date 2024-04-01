@@ -72,21 +72,15 @@ static int scanident(int c, char *buf, int lim)
 
   while (isalpha(c) || isdigit(c) || '_' == c)
   {
-    if (lim - 1 == i)
-    {
-      printf("Identifier too long on line %d\n", Line);
-      exit(1);
-    }
-    else if (i < lim - 1) // Can remove this...
-    {
-      buf[i++] = c;
-    }
+    if (i >= lim - 1)
+      fatal("Identifier too long");
+
+    buf[i++] = c;
 
     c = next();
   }
 
-  // Put back the last character read that was not part of the identifier
-  // NULL-terminate the buffer and return its length
+  // Put back final non-identifier character read. Terminate buffer and return its length.
   putback(c);
   buf[i] = '\0';
   return i;
@@ -98,6 +92,10 @@ static int keyword(char *s)
 {
   switch (*s)
   {
+  case 'i':
+    if (!strcmp(s, "int"))
+      return T_INT;
+    break;
   case 'p':
     if (!strcmp(s, "print"))
       return T_PRINT;
@@ -134,6 +132,9 @@ int scan(struct token *t)
   case ';':
     t->token = T_SEMI;
     break;
+  case '=':
+    t->token = T_EQUALS;
+    break;
   default:
     if (isdigit(c))
     {
@@ -152,12 +153,12 @@ int scan(struct token *t)
         break;
       }
 
-      printf("Unrecognized symbol %s on line %d\n", Text, Line);
-      exit(1);
+      // Not a recognized keyword; must be an identifier
+      t->token = T_IDENT;
+      break;
     }
 
-    printf("Unrecognized character %c on line %d\n", c, Line);
-    exit(1);
+    fatalc("Unrecognized character", c);
   }
 
   return 1;

@@ -9,22 +9,26 @@ struct ASTnode *mkastleaf(int op, int intvalue);
 struct ASTnode *mkastunary(int op, struct ASTnode *left, int intvalue);
 
 // `code_generation.c`
-int genAST(struct ASTnode *n);
-void genpreamble();
-void genpostamble();
-void genfreeregs();
+int genAST(struct ASTnode *n, int reg);
+void genpreamble(void);
+void genpostamble(void);
+void genfreeregs(void);
 void genprintint(int reg);
+void genglobsym(char *s);
 
 // `code_generation_x86-64.c`
 void freeall_registers(void);
-void cgpreamble();
-void cgpostamble();
-int cgload(int value);
+void cgpreamble(void);
+void cgpostamble(void);
+int cgloadint(int value);
+int cgloadglob(char *identifier);
 int cgadd(int r1, int r2);
 int cgsub(int r1, int r2);
 int cgmul(int r1, int r2);
 int cgdiv(int r1, int r2);
 void cgprintint(int r);
+int cgstorglob(int r, char *identifier);
+void cgglobsym(char *sym);
 
 // `expressions.c`
 struct ASTnode *binexpr(int ptp);
@@ -35,3 +39,15 @@ void statements(void);
 // `miscellaneous.c`
 void match(int t, char *what);
 void semi(void);
+void ident(void);
+void fatal(char *s);
+void fatals(char *s1, char *s2);
+void fatald(char *s, int d);
+void fatalc(char *s, int c);
+
+// `symbols.c`
+int findglob(char *s);
+int addglob(char *name);
+
+// `declarations.c`
+void variable_declaration(void);

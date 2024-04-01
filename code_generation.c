@@ -4,15 +4,15 @@
 
 // Generic code generator
 
-// Given an AST, recursively generate assembly code
-int genAST(struct ASTnode *n)
+// Recursively generate assembly code from an AST node. Return the register with the result.
+int genAST(struct ASTnode *n, int reg)
 {
   int leftreg, rightreg;
 
   if (n->left)
-    leftreg = genAST(n->left);
+    leftreg = genAST(n->left, -1);
   if (n->right)
-    rightreg = genAST(n->right);
+    rightreg = genAST(n->right, leftreg);
 
   switch (n->op)
   {
@@ -25,24 +25,30 @@ int genAST(struct ASTnode *n)
   case A_DIVIDE:
     return cgdiv(leftreg, rightreg);
   case A_INTLIT:
-    return cgload(n->intvalue);
+    return cgloadint(n->v.intvalue);
+  case A_IDENT:
+    return cgloadglob(Gsym[n->v.id].name);
+  case A_LVIDENT:
+    return cgstorglob(reg, Gsym[n->v.id].name);
+  case A_ASSIGN:
+    return rightreg; // Work is already done; return result
   default:
-    fprintf(stderr, "Unknown AST operator %d\n", n->op);
-    exit(1);
+    fatald("Unknown AST operator", n->op);
+    __builtin_unreachable();
   }
 }
 
-void genpreamble()
+void genpreamble(void)
 {
   cgpreamble();
 }
 
-void genpostamble()
+void genpostamble(void)
 {
   cgpostamble();
 }
 
-void genfreeregs()
+void genfreeregs(void)
 {
   freeall_registers();
 }
@@ -50,4 +56,9 @@ void genfreeregs()
 void genprintint(int reg)
 {
   cgprintint(reg);
+}
+
+void genglobsym(char *s)
+{
+  cgglobsym(s);
 }
