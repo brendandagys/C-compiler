@@ -17,7 +17,7 @@ clean:
 	rm -f bin/b *.o *.s out
 
 test: bin/b
-	bin/b tests/input01
+	bin/b tests/input05
 	cc -o out out.s
 	./out
 

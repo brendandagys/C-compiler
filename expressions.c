@@ -38,6 +38,7 @@ static int arithop(int tokentype)
   if (tokentype > T_EOF && tokentype < T_INTLIT)
     return tokentype;
   fatald("Syntax error, token", tokentype);
+  __builtin_unreachable();
 }
 
 // Operator precedence for each token. MUST MATCH ORDER OF TOKENS (`definitions.h`).
@@ -70,7 +71,7 @@ struct ASTnode *binexpr(int ptp)
   left = primary();
 
   tokentype = Token.token;
-  if (tokentype == T_SEMI)
+  if (tokentype == T_SEMI || tokentype == T_RPAREN)
     return left;
 
   // While current token precedence > previous token precedence...
@@ -82,12 +83,13 @@ struct ASTnode *binexpr(int ptp)
     // Recursively build a sub-tree with binexpr(<token precedence>)
     right = binexpr(OpPrec[tokentype]);
 
-    // Join that sub-tree with the left-hand sub-tree
-    left = mkastnode(arithop(tokentype), left, right, 0);
+    // Join that sub-tree with the left-hand sub-tree.
+    // Convert the token into an AST operation at the same time.
+    left = mkastnode(arithop(tokentype), left, NULL, right, 0);
 
-    // Update details of current token. If none left, return the left node.
-    tokentype = Token.token;
-    if (tokentype == T_SEMI)
+    tokentype = Token.token; // Update details of current token
+
+    if (tokentype == T_SEMI || tokentype == T_RPAREN)
       return left;
   }
 

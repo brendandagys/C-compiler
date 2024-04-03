@@ -17,7 +17,8 @@ void freeall_registers(void)
   freereg[0] = freereg[1] = freereg[2] = freereg[3] = 1;
 }
 
-// Allocate a free register. Return the number of the register. Terminate if none are free.
+// Allocate a free register. Return the number of the register. Terminate if
+// none are free.
 static int alloc_register(void)
 {
   for (int i = 0; i < 4; i++)
@@ -33,7 +34,8 @@ static int alloc_register(void)
   __builtin_unreachable();
 }
 
-// Return a register to the list of available registers. Terminate if already available.
+// Return a register to the list of available registers. Terminate if already
+// available.
 static void free_register(int reg)
 {
   if (freereg[reg] != 0)
@@ -61,43 +63,48 @@ void cgpreamble(void)
   Stack fills downward...
   */
 
-  fputs(
-      "\t.text\n" // Text section
-      ".LC0:\n"   // Label to reference a string literal ("%d\n")
-      "\t.string\t\"%d\\n\"\n"
-      "printint:\n" // Function label
-      // SET UP STACK FRAME
-      "\tpushq\t%rbp\n"      // Push base pointer onto stack (reference point for accessing local variables and parameters within a function)
-      "\tmovq\t%rsp, %rbp\n" // Move stack pointer to be at base pointer
+  fputs("\t.text\n" // Text section
+        ".LC0:\n"   // Label to reference a string literal ("%d\n")
+        "\t.string\t\"%d\\n\"\n"
+        "printint:\n" // Function label
+        // SET UP STACK FRAME
+        "\tpushq\t%rbp\n"      // Push base pointer onto stack (reference point for
+                               // accessing local variables and parameters within a
+                               // function)
+        "\tmovq\t%rsp, %rbp\n" // Move stack pointer to be at base pointer
 
-      "\tsubq\t$16, %rsp\n"       // Subtract 16 bytes from stack pointer (allocate space on stack for local variables)
-      "\tmovl\t%edi, -4(%rbp)\n"  // Move `printint` argument to stack
-      "\tmovl\t-4(%rbp), %eax\n"  // Move `printint` argument from stack to EAX register
-      "\tmovl\t%eax, %esi\n"      // Move `printint` argument into ESI (second argument for `printf`)
-      "\tleaq	.LC0(%rip), %rdi\n" // Load address of string literal into RDI (first argument for `printf`)
-      "\tmovl	$0, %eax\n"         // Clear EAX
-      "\tcall	printf@PLT\n"
-      "\tnop\n"
-      "\tleave\n" // Clean up stack frame before returning
-      "\tret\n"
-      "\n"
-      "\t.globl\tmain\n" // Declares `main` function as global, making it accessible to other program parts
-      "\t.type\tmain, @function\n"
-      "main:\n"
-      // SET UP STACK FRAME
-      "\tpushq\t%rbp\n"
-      "\tmovq	%rsp, %rbp\n",
-      Outfile);
+        "\tsubq\t$16, %rsp\n"       // Subtract 16 bytes from stack pointer (allocate
+                                    // space on stack for local variables)
+        "\tmovl\t%edi, -4(%rbp)\n"  // Move `printint` argument to stack
+        "\tmovl\t-4(%rbp), %eax\n"  // Move `printint` argument from stack to EAX
+                                    // register
+        "\tmovl\t%eax, %esi\n"      // Move `printint` argument into ESI (second
+                                    // argument for `printf`)
+        "\tleaq	.LC0(%rip), %rdi\n" // Load address of string literal into RDI
+                                    // (first argument for `printf`)
+        "\tmovl	$0, %eax\n"         // Clear EAX
+        "\tcall	printf@PLT\n"
+        "\tnop\n"
+        "\tleave\n" // Clean up stack frame before returning
+        "\tret\n"
+        "\n"
+        "\t.globl\tmain\n" // Declares `main` function as global, making it
+                           // accessible to other program parts
+        "\t.type\tmain, @function\n"
+        "main:\n"
+        // SET UP STACK FRAME
+        "\tpushq\t%rbp\n"
+        "\tmovq	%rsp, %rbp\n",
+        Outfile);
 }
 
 // Print out the assembly postamble
 void cgpostamble(void)
 {
-  fputs(
-      "\tmovl	$0, %eax\n"
-      "\tpopq	%rbp\n"
-      "\tret\n",
-      Outfile);
+  fputs("\tmovl	$0, %eax\n"
+        "\tpopq	%rbp\n"
+        "\tret\n",
+        Outfile);
 }
 
 // Load an integer literal value into a register and return the register number
@@ -126,7 +133,8 @@ int cgadd(int r1, int r2)
 // Subtract the second register from the first
 int cgsub(int r1, int r2)
 {
-  fprintf(Outfile, "\tsubq\t%s, %s\n", reglist[r2], reglist[r1]); // source, destination ... (d - s) -> d
+  fprintf(Outfile, "\tsubq\t%s, %s\n", reglist[r2],
+          reglist[r1]); // source, destination ... (d - s) -> d
   free_register(r2);
   return r1;
 }
@@ -139,19 +147,22 @@ int cgmul(int r1, int r2)
   return r2;
 }
 
-// Divide the first register by the sceond and return the number of the register with the result
+// Divide the first register by the sceond and return the number of the register
+// with the result
 int cgdiv(int r1, int r2)
 {
   fprintf(Outfile, "\tmovq\t%s,%%rax\n", reglist[r1]);
-  fprintf(Outfile, "\tcqo\n");                    // Extend %rax to 8 bytes
-  fprintf(Outfile, "\tidivq\t%s\n", reglist[r2]); // (%rax / r2) -> quotient in %rax, remainder in %rdx
+  fprintf(Outfile, "\tcqo\n"); // Extend %rax to 8 bytes
+  fprintf(Outfile, "\tidivq\t%s\n",
+          reglist[r2]); // (%rax / r2) -> quotient in %rax, remainder in %rdx
   fprintf(Outfile, "\tmovq\t%%rax,%s\n", reglist[r1]);
   free_register(r2);
   return (r1);
 }
 
 // There's no x86-64 instruction to print a register as a decimal, so the
-// preamble contains `printint()` that takes a register argument and calls `printf()`
+// preamble contains `printint()` that takes a register argument and calls
+// `printf()`
 void cgprintint(int r)
 {
   fprintf(Outfile, "\tmovq\t%s, %%rdi\n", reglist[r]);
@@ -167,24 +178,42 @@ int cgstorglob(int r, char *identifier)
 }
 
 // Generate a global symbol
-void cgglobsym(char *sym)
-{
-  fprintf(Outfile, "\t.comm\t%s,8,8\n", sym);
-}
+void cgglobsym(char *sym) { fprintf(Outfile, "\t.comm\t%s,8,8\n", sym); }
 
-// Compare 2 registers using a `how` comparison
-static int cgcompare(int r1, int r2, char *how)
+// Comparison instructions in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
+static char *cmplist[] = {"sete", "setne", "setl", "setg", "setle", "setge"};
+
+// Compare 2 registers and set `r2` if true
+int cgcompare_and_set(int ASTop, int r1, int r2)
 {
+  // Check the range of the AST operation
+  if (ASTop < A_EQ || ASTop > A_GE)
+    fatal("Bad ASTop in `cgcompare_and_set()`");
+
   fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
-  fprintf(Outfile, "\t%s\t%s\n", how, breglist[r2]);
-  fprintf(Outfile, "\tandq\t$255,%s\n", reglist[r2]);
+  fprintf(Outfile, "\t%s\t%s\n", cmplist[ASTop - A_EQ], breglist[r2]);
+  fprintf(Outfile, "\tmovzbq\t%s, %s\n", breglist[r2], reglist[r2]);
   free_register(r1);
   return r2;
 }
 
-int cgequal(int r1, int r2) { return (cgcompare(r1, r2, "sete")); }
-int cgnotequal(int r1, int r2) { return (cgcompare(r1, r2, "setne")); }
-int cglessthan(int r1, int r2) { return (cgcompare(r1, r2, "setl")); }
-int cggreaterthan(int r1, int r2) { return (cgcompare(r1, r2, "setg")); }
-int cglessequal(int r1, int r2) { return (cgcompare(r1, r2, "setle")); }
-int cggreaterequal(int r1, int r2) { return (cgcompare(r1, r2, "setge")); }
+// Generate a label
+void cglabel(int l) { fprintf(Outfile, "L%d:\n", 1); }
+
+// Generate a jump to a label
+void cgjump(int l) { fprintf(Outfile, "\tjmp\tL%d\n", 1); }
+
+// Inverted jump instructions
+static char *invcmplist[] = {"jne", "je", "jge", "jle", "jg", "jl"};
+
+// Compare 2 registers and jump if FALSE
+int cgcompare_and_jump(int ASTop, int r1, int r2, int label)
+{
+  if (ASTop < A_EQ || ASTop > A_GE)
+    fatal("Bad ASTop in `cgcompare_and_jump()`");
+
+  fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
+  fprintf(Outfile, "\t%s\tL%d\n", invcmplist[ASTop - A_EQ], label);
+  freeall_registers();
+  return NOREG;
+}

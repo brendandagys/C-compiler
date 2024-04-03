@@ -26,6 +26,8 @@ static void usage(char *prog)
 // Open/scan the file and its tokens
 int main(int argc, char *argv[])
 {
+  struct ASTnode *tree;
+
   if (argc != 2)
     usage(argv[0]);
 
@@ -46,7 +48,8 @@ int main(int argc, char *argv[])
   scan(&Token); // Get the first token from the input
 
   genpreamble();
-  statements();
+  tree = compound_statement();
+  genAST(tree, NOREG, 0);
   genpostamble();
 
   fclose(Infile);
