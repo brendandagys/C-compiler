@@ -62,7 +62,7 @@ static struct ASTnode *if_statement(void)
 }
 
 // Parse a WHILE statement and return its AST
-struct ASTnode *while_statement(void)
+static struct ASTnode *while_statement(void)
 {
   struct ASTnode *condAST, *bodyAST;
 
@@ -103,6 +103,9 @@ struct ASTnode *compound_statement(void)
       break;
     case T_IF:
       tree = if_statement();
+      break;
+    case T_WHILE:
+      tree = while_statement();
       break;
     case T_RBRACE:
       rbrace(); // When we reach this token, skip past it and return the AST
