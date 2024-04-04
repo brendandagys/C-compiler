@@ -19,7 +19,7 @@ clean:
 test: bin/b tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
-test6: bin/b tests/input06
-	bin/b tests/input06
+test7: bin/b tests/input07
+	bin/b tests/input07
 	cc -o out out.s
 	./out
