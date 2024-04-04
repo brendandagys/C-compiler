@@ -41,6 +41,7 @@ enum
   T_INT,
   T_IF,
   T_ELSE,
+  T_WHILE,
 };
 
 struct token
@@ -52,7 +53,7 @@ struct token
 // AST node types (op)
 enum
 {
-  A_ADD = 1,
+  A_ADD = 1, // These 4 line up with the tokens above
   A_SUBTRACT,
   A_MULTIPLY,
   A_DIVIDE,
@@ -71,7 +72,9 @@ enum
   A_ASSIGN,
   A_PRINT,
   A_GLUE,
+
   A_IF,
+  A_WHILE,
 };
 
 struct ASTnode

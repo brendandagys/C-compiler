@@ -16,11 +16,10 @@ bin/b: $(SRCS)
 clean:
 	rm -f bin/b *.o *.s out
 
-test: bin/b
-	bin/b tests/input05
-	cc -o out out.s
-	./out
+test: bin/b tests/runtests
+	(cd tests; chmod +x runtests; ./runtests)
 
-	bin/b tests/input02
+test6: bin/b tests/input06
+	bin/b tests/input06
 	cc -o out out.s
 	./out

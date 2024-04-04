@@ -12,7 +12,7 @@ static int label(void)
 }
 
 // Generate the code for an IF statement and an optional ELSE clause
-static int genIFAST(struct ASTnode *n)
+static int genIF(struct ASTnode *n)
 {
   int Lfalse, Lend;
 
@@ -49,6 +49,29 @@ static int genIFAST(struct ASTnode *n)
   return NOREG;
 }
 
+// Generate the code for a WHILE statement and an optional ELSE clause
+static int genWHILE(struct ASTnode *n)
+{
+  int Lstart = label();
+  int Lend = label();
+
+  cglabel(Lstart);
+
+  // Generate condition code followed by a zero jump to `Lend`.
+  // We cheat by sending the `Lend` label as a register.
+  genAST(n->left, Lend, n->op);
+  genfreeregs();
+
+  // Generate the compound statement in the loop body
+  genAST(n->right, NOREG, n->op);
+  genfreeregs();
+
+  cgjump(Lstart); // Jump back to condition
+  cglabel(Lend);  // Jump here when condition is false
+
+  return NOREG;
+}
+
 // Given an AST node, the register (if any) holding the previous rvalue, and the
 // AST op of the parent, recursively generate assembly code. Return the register
 // with the final tree value.
@@ -60,7 +83,9 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
   switch (n->op)
   {
   case A_IF:
-    return genIFAST(n);
+    return genIF(n);
+  case A_WHILE:
+    return genWHILE(n);
   case A_GLUE:
     // Do each child statement. Free the registers after each child.
     genAST(n->left, NOREG, n->op);
@@ -94,10 +119,9 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
   case A_GT:
   case A_LE:
   case A_GE:
-    // If parent AST node is A_IF, generate a compare followed by a jump.
-    // Otherwise, compare registers and set one to 1 or 0 based on the
-    // comparison.
-    if (parentASTop == A_IF)
+    // If parent AST node is A_IF or A_WHILE, generate a compare followed by a jump.
+    // Otherwise, compare registers and set one to 1 or 0 based on the comparison.
+    if (parentASTop == A_IF || parentASTop == A_WHILE)
       return cgcompare_and_jump(n->op, leftreg, rightreg, reg);
     else
       return cgcompare_and_set(n->op, leftreg, rightreg);

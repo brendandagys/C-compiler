@@ -17,6 +17,8 @@ compound_statement: '{' '}'          // empty, i.e. no statement
  if_statement: if_head
       |        if_head 'else' compound_statement
       ;
+    
+ while_statement: 'while' '(' true_false_expression ')' compound_statement ;
 
  if_head: 'if' '(' true_false_expression ')' compound_statement  ;
 
