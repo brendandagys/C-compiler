@@ -19,7 +19,8 @@ void genglobsym(char *s);
 // `code_generation_x86-64.c`
 void freeall_registers(void);
 void cgpreamble(void);
-void cgpostamble(void);
+void cgfuncpreamble(char *name);
+void cgfuncpostamble(void);
 int cgloadint(int value);
 int cgloadglob(char *identifier);
 int cgadd(int r1, int r2);
@@ -59,3 +60,4 @@ int addglob(char *name);
 
 // `declarations.c`
 void variable_declaration(void);
+struct ASTnode *function_declaration(void);

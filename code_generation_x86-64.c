@@ -87,19 +87,25 @@ void cgpreamble(void)
         "\tnop\n"
         "\tleave\n" // Clean up stack frame before returning
         "\tret\n"
-        "\n"
-        "\t.globl\tmain\n" // Declares `main` function as global, making it
-                           // accessible to other program parts
-        "\t.type\tmain, @function\n"
-        "main:\n"
-        // SET UP STACK FRAME
-        "\tpushq\t%rbp\n"
-        "\tmovq	%rsp, %rbp\n",
+        "\n",
         Outfile);
 }
 
-// Print out the assembly postamble
-void cgpostamble(void)
+// Print out a function preamble
+void cgfuncpreamble(char *name)
+{
+  fprintf(Outfile,
+          "\t.text\n"
+          "\t.globl\t%s\n"
+          "\t.type\t%s, @function\n"
+          "%s:\n"
+          "\tpushq\t%%rbp\n"
+          "\tmovq\t%%rsp, %%rbp\n",
+          name, name, name);
+}
+
+// Print out a function postamble
+void cgfuncpostamble(void)
 {
   fputs("\tmovl	$0, %eax\n"
         "\tpopq	%rbp\n"

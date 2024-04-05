@@ -43,6 +43,7 @@ enum
   T_ELSE,
   T_WHILE,
   T_FOR,
+  T_VOID,
 };
 
 struct token
@@ -76,6 +77,7 @@ enum
 
   A_IF,
   A_WHILE,
+  A_FUNCTION,
 };
 
 struct ASTnode

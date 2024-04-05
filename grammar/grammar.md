@@ -1,6 +1,6 @@
 ```
-compound_statement: '{' '}'          // empty, i.e. no statement
-      |      '{' statement '}'
+ compound_statement: '{' '}'          // empty, i.e. no statement
+     |      '{' statement '}'
       |      '{' statement statements '}'
       ;
 
@@ -13,7 +13,11 @@ compound_statement: '{' '}'          // empty, i.e. no statement
       ;
 
  print_statement: 'print' expression ';'  ;
+ 
  declaration: 'int' identifier ';'  ;
+ 
+ function_declaration: 'void' identifier '(' ')' compound_statement  ;
+ 
  assignment_statement: identifier '=' expression ';'   ;
 
  if_statement: if_head
