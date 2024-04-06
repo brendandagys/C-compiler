@@ -116,7 +116,8 @@ static int keyword(char *s)
     break;
   case 'v':
     if (!strcmp(s, "void"))
-      break;
+      return T_VOID;
+    break;
   }
 
   return 0;
