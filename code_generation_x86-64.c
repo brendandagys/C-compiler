@@ -113,18 +113,26 @@ void cgfuncpostamble(void)
         Outfile);
 }
 
-// Load an integer literal value into a register and return the register number
-int cgloadint(int value)
+// Load an integer literal value into a register and return the register number.
+// For x86-64, we don't need to worry about the type.
+int cgloadint(int value, int type)
 {
   int r = alloc_register();
   fprintf(Outfile, "\tmovq\t$%d, %s\n", value, reglist[r]);
   return r;
 }
 
-int cgloadglob(char *identifier)
+int cgloadglob(int id)
 {
   int r = alloc_register();
-  fprintf(Outfile, "\tmovq\t%s(\%%rip), %s\n", identifier, reglist[r]);
+
+  // Print out the code to initialize it
+  if (Gsym[id].type == P_INT)
+    // `movq`: Move 8 bytes into 8-byte register
+    fprintf(Outfile, "\tmovq\t%s(\%%rip), %s\n", Gsym[id].name, reglist[r]);
+  else // `P_CHAR` | `movzbq` zeros 8-byte register and moves 1 byte into it (this widens the char)
+    fprintf(Outfile, "\tmovzbq\t%s(\%%rip), %s\n", Gsym[id].name, reglist[r]);
+
   return r;
 }
 
@@ -163,7 +171,7 @@ int cgdiv(int r1, int r2)
           reglist[r2]); // (%rax / r2) -> quotient in %rax, remainder in %rdx
   fprintf(Outfile, "\tmovq\t%%rax,%s\n", reglist[r1]);
   free_register(r2);
-  return (r1);
+  return r1;
 }
 
 // There's no x86-64 instruction to print a register as a decimal, so the
@@ -177,14 +185,23 @@ void cgprintint(int r)
 }
 
 // Store a register's value into a variable
-int cgstorglob(int r, char *identifier)
+int cgstorglob(int r, int id)
 {
-  fprintf(Outfile, "\tmovq\t%s, %s(\%%rip)\n", reglist[r], identifier);
+  if (Gsym[id].type == P_INT)
+    fprintf(Outfile, "\tmovq\t%s, %s(\%%rip)\n", reglist[r], Gsym[id].name);
+  else // `P_CHAR`
+    fprintf(Outfile, "\tmovb\t%s, %s(\%%rip)\n", breglist[r], Gsym[id].name);
   return r;
 }
 
 // Generate a global symbol
-void cgglobsym(char *sym) { fprintf(Outfile, "\t.comm\t%s,8,8\n", sym); }
+void cgglobsym(int id)
+{
+  if (Gsym[id].type == P_INT)
+    fprintf(Outfile, "\t.comm\t%s,8,8\n", Gsym[id].name);
+  else // `P_CHAR`
+    fprintf(Outfile, "\t.comm\t%s,1,1\n", Gsym[id].name);
+}
 
 // Comparison instructions in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE
 static char *cmplist[] = {"sete", "setne", "setl", "setg", "setle", "setge"};
@@ -222,4 +239,12 @@ int cgcompare_and_jump(int ASTop, int r1, int r2, int label)
   fprintf(Outfile, "\t%s\tL%d\n", invcmplist[ASTop - A_EQ], label);
   freeall_registers();
   return NOREG;
+}
+
+// Widen the value in the register from the old to the new type and return the
+// register with the new value
+int cgwiden(int r, int oldtype, int newtype)
+{
+  // Nothing to do
+  return r;
 }

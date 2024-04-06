@@ -10,32 +10,57 @@ static struct ASTnode *single_statement(void);
 static struct ASTnode *print_statement(void)
 {
   struct ASTnode *tree;
+  int lefttype, righttype;
   int reg;
 
   match(T_PRINT, "print");
   tree = binexpr(0);
-  tree = mkastunary(A_PRINT, tree, 0);
+
+  lefttype = P_INT;
+  righttype = tree->type;
+  if (!type_compatible(&lefttype, &righttype, 0))
+    fatal("Incompatible types");
+
+  if (righttype)
+    tree = mkastunary(righttype, P_INT, tree, 0);
+
+  tree = mkastunary(A_PRINT, P_NONE, tree, 0);
+
   // Semi handled in `compound_statement()`
+
   return tree;
 }
 
 static struct ASTnode *assignment_statement(void)
 {
   struct ASTnode *left, *right, *tree;
+  int lefttype, righttype;
   int id;
 
   ident();
 
   if ((id = findglob(Text)) == -1)
   {
-    fatals("Unknown variable", Text);
+    fatals("Undeclared variable", Text);
   }
 
-  right = mkastleaf(A_LVIDENT, id);
+  right = mkastleaf(A_LVIDENT, Gsym[id].type, id);
+
   match(T_ASSIGN, "=");
   left = binexpr(0);
-  tree = mkastnode(A_ASSIGN, left, NULL, right, 0); // Assign left child to right child
+
+  lefttype = left->type;
+  righttype = right->type;
+  if (!type_compatible(&lefttype, &righttype, 1))
+    fatal("Incompatible types");
+
+  if (lefttype)
+    left = mkastunary(lefttype, right->type, left, 0);
+
+  tree = mkastnode(A_ASSIGN, P_INT, left, NULL, right, 0); // Assign left child to right child
+
   // Semi handled in `compound_statement()`
+
   return tree;
 }
 
@@ -61,7 +86,7 @@ static struct ASTnode *if_statement(void)
     falseAST = compound_statement();
   }
 
-  return mkastnode(A_IF, condAST, trueAST, falseAST, 0);
+  return mkastnode(A_IF, P_NONE, condAST, trueAST, falseAST, 0);
 }
 
 // Parse a WHILE statement and return its AST
@@ -79,7 +104,7 @@ static struct ASTnode *while_statement(void)
 
   bodyAST = compound_statement();
 
-  return mkastnode(A_WHILE, condAST, NULL, bodyAST, 0);
+  return mkastnode(A_WHILE, P_NONE, condAST, NULL, bodyAST, 0);
 }
 
 static struct ASTnode *for_statement(void)
@@ -107,11 +132,11 @@ static struct ASTnode *for_statement(void)
   //             compound  postop
 
   // Glue the compound statement and post-op tree together
-  tree = mkastnode(A_GLUE, bodyAST, NULL, postopAST, 0);
+  tree = mkastnode(A_GLUE, P_NONE, bodyAST, NULL, postopAST, 0);
   // Make a WHILE loop with the condition and the body
-  tree = mkastnode(A_WHILE, condAST, NULL, tree, 0);
+  tree = mkastnode(A_WHILE, P_NONE, condAST, NULL, tree, 0);
   // Glue the pre-op tree and WHILE tree together
-  return mkastnode(A_GLUE, preopAST, NULL, tree, 0);
+  return mkastnode(A_GLUE, P_NONE, preopAST, NULL, tree, 0);
 }
 
 // Parse a single statement and return its AST
@@ -161,7 +186,7 @@ struct ASTnode *compound_statement(void)
       if (left == NULL)
         left = tree;
       else
-        left = mkastnode(A_GLUE, left, NULL, tree, 0);
+        left = mkastnode(A_GLUE, P_NONE, left, NULL, tree, 0);
     }
 
     // When we reach this token, skip past it and return the AST

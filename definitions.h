@@ -44,6 +44,7 @@ enum
   T_WHILE,
   T_FOR,
   T_VOID,
+  T_CHAR,
 };
 
 struct token
@@ -78,26 +79,46 @@ enum
   A_IF,
   A_WHILE,
   A_FUNCTION,
+  A_WIDEN,
+};
+
+// Primitive types
+enum
+{
+  P_NONE,
+  P_VOID,
+  P_CHAR,
+  P_INT,
 };
 
 struct ASTnode
 {
   int op;               // "Operation" to be performed on this tree
+  int type;             // Type of any expression this tree generates
   struct ASTnode *left; // Left and right child trees
   struct ASTnode *mid;
   struct ASTnode *right;
   union
   {
     int intvalue; // For `A_INTLIT`, the integer value
-    int id;       // For `A_IDENT`, the symbol slot number
+    int id;       // For `A_IDENT` + `A_LVIDENT`: the symbol slot number
   } v;
 };
 
 // Use when the AST generation functions have no register to return
 #define NOREG -1
 
+// Structural types
+enum
+{
+  S_VARIABLE,
+  S_FUNCTION,
+};
+
 // Symbol table structure
 struct symtable
 {
   char *name; // Name of a symbol
+  int type;   // Primitive type for the symbol
+  int stype;  // Structural type for the symbol
 };

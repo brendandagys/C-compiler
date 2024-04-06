@@ -8,7 +8,8 @@ SRCS= \
 	scanner.c \
 	statements.c \
 	symbols.c \
-	tree.c
+	tree.c \
+	types.c
 
 bin/b: $(SRCS)
 	cc -o bin/b -g $(SRCS)
@@ -19,7 +20,7 @@ clean:
 test: bin/b tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
-test8: bin/b tests/input08
-	bin/b tests/input08
+test10: bin/b tests/input10
+	bin/b tests/input10
 	cc -o out out.s
 	./out
