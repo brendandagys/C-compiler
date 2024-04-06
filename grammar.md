@@ -1,6 +1,6 @@
 ```
  compound_statement: '{' '}'          // empty, i.e. no statement
-     |      '{' statement '}'
+      |      '{' statement '}'
       |      '{' statement statements '}'
       ;
 
@@ -32,6 +32,8 @@
  postop_statement: statement  ;
 
  if_head: 'if' '(' true_false_expression ')' compound_statement  ;
+
+ function_call: identifier '(' expression ')'   ;
 
  identifier: T_IDENT ;
 
