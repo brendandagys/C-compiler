@@ -10,28 +10,31 @@
 
 int type_compatible(int *left, int *right, int onlyright)
 {
-  // Void not compatible with anything
-  if ((*left == P_VOID) || (*right == P_VOID))
-    return 0;
+  int leftsize, rightsize;
 
-  // Same types are compatible
   if (*left == *right)
   {
     *left = *right = 0;
     return 1;
   }
 
-  // Widen `P_CHAR` to `P_INT`
-  if ((*left == P_CHAR) && (*right == P_INT))
+  leftsize = genprimsize(*left);
+  rightsize = genprimsize(*right);
+
+  // Types with zero size are not compatible with anything
+  if ((leftsize == 0 || rightsize == 0))
+    return 0;
+
+  if (leftsize < rightsize)
   {
     *left = A_WIDEN;
     *right = 0;
     return 1;
   }
 
-  if ((*left == P_INT) && (*right == P_CHAR))
+  if (rightsize < leftsize)
   {
-    if (onlyright) // For `A_ASSIGN`; don't let a `P_INT` go to a `P_CHAR` variable
+    if (onlyright)
       return 0;
 
     *left = 0;
@@ -39,7 +42,7 @@ int type_compatible(int *left, int *right, int onlyright)
     return 1;
   }
 
-  // Anything left is compatible
+  // Anything left is the same size and thus is compatible
   *left = *right = 0;
   return 1;
 }

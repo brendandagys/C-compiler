@@ -5,7 +5,7 @@
 // Generic code generator
 
 // Generate and return a new label number
-static int label(void)
+int genlabel(void)
 {
   static int id = 1;
   return id++;
@@ -19,9 +19,9 @@ static int genIF(struct ASTnode *n)
   // Generate 2 labels: one for the false compound statement, and one for the
   // end of the overall IF statement. When no ELSE, `Lfalse` is the ending
   // label.
-  Lfalse = label();
+  Lfalse = genlabel();
   if (n->right)
-    Lend = label();
+    Lend = genlabel();
 
   // Generate the condition code, followed by a zero jump to `Lfalse`.
   // We cheat by sending the `Lfalse` label as a register.
@@ -52,8 +52,8 @@ static int genIF(struct ASTnode *n)
 // Generate the code for a WHILE statement and an optional ELSE clause
 static int genWHILE(struct ASTnode *n)
 {
-  int Lstart = label();
-  int Lend = label();
+  int Lstart = genlabel();
+  int Lend = genlabel();
 
   cglabel(Lstart);
 
@@ -94,9 +94,9 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
     genfreeregs();
     return NOREG;
   case A_FUNCTION:
-    cgfuncpreamble(Gsym[n->v.id].name);
+    cgfuncpreamble(n->v.id);
     genAST(n->left, NOREG, n->op);
-    cgfuncpostamble();
+    cgfuncpostamble(n->v.id);
     return NOREG;
   }
 
@@ -146,6 +146,11 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
   case A_WIDEN: // `cgwiden()` does nothing, but leave this node for other hardware platforms
     // Widen child's type to the parent's type
     return cgwiden(leftreg, n->left->type, n->type);
+  case A_RETURN:
+    cgreturn(leftreg, Functionid);
+    return NOREG;
+  case A_FUNCCALL:
+    return cgcall(leftreg, n->v.id);
   default:
     fatald("Unknown AST operator", n->op);
     __builtin_unreachable();
@@ -159,3 +164,5 @@ void genfreeregs(void) { freeall_registers(); }
 void genprintint(int reg) { cgprintint(reg); }
 
 void genglobsym(int id) { cgglobsym(id); }
+
+int genprimsize(int type) { return cgprimsize(type); }

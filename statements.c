@@ -39,6 +39,14 @@ static struct ASTnode *assignment_statement(void)
 
   ident();
 
+  // Could be a variable or a function call (next token is a '(')
+  if (Token.token == T_LPAREN)
+  {
+    return funccall();
+  }
+
+  // No need to reject token, because next token MUST then be `=`
+
   if ((id = findglob(Text)) == -1)
   {
     fatals("Undeclared variable", Text);
@@ -139,6 +147,35 @@ static struct ASTnode *for_statement(void)
   return mkastnode(A_GLUE, P_NONE, preopAST, NULL, tree, 0);
 }
 
+// Parse a return statement and return its AST
+static struct ASTnode *return_statement(void)
+{
+  struct ASTnode *tree;
+  int returntype, functype;
+
+  if (Gsym[Functionid].type == P_VOID)
+    fatal("Can't return from a `void` function");
+
+  match(T_RETURN, "return");
+  lparen();
+
+  tree = binexpr(0);
+
+  returntype = tree->type;
+  functype = Gsym[Functionid].type;
+
+  if (!type_compatible(&returntype, &functype, 1))
+    fatal("Incompatible types");
+
+  if (returntype) // Widen, if necessary
+    tree = mkastunary(returntype, functype, tree, 0);
+
+  tree = mkastunary(A_RETURN, P_NONE, tree, 0);
+
+  rparen();
+  return tree;
+}
+
 // Parse a single statement and return its AST
 static struct ASTnode *single_statement(void)
 {
@@ -146,7 +183,9 @@ static struct ASTnode *single_statement(void)
   {
   case T_PRINT:
     return print_statement();
+  case T_CHAR:
   case T_INT:
+  case T_LONG:
     variable_declaration();
     return NULL; // No AST generated
   case T_IDENT:
@@ -157,6 +196,8 @@ static struct ASTnode *single_statement(void)
     return while_statement();
   case T_FOR:
     return for_statement();
+  case T_RETURN:
+    return return_statement();
   default:
     fatald("Syntax error, token", Token.token);
     __builtin_unreachable();
@@ -176,7 +217,10 @@ struct ASTnode *compound_statement(void)
     tree = single_statement();
 
     // Some statements must be followed by a semicolon
-    if (tree != NULL && (tree->op == A_PRINT || tree->op == A_ASSIGN))
+    if (tree != NULL && (tree->op == A_PRINT ||
+                         tree->op == A_ASSIGN ||
+                         tree->op == A_RETURN ||
+                         tree->op == A_FUNCCALL))
       semi();
 
     // For each new tree, either save it in left (if empty), or glue current

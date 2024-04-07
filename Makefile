@@ -20,7 +20,7 @@ clean:
 test: bin/b tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
-test10: bin/b tests/input10
-	bin/b tests/input10
-	cc -o out out.s
+test14: bin/b tests/input14 lib/printint.c
+	bin/b tests/input14
+	cc -o out out.s lib/printint.c
 	./out

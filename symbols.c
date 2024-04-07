@@ -29,9 +29,8 @@ static int newglob(void)
   return p;
 }
 
-// Add a symbol to the symbol table and return its index.
-// Also set up its type and structural type.
-int addglob(char *name, int type, int stype)
+// Add a symbol to the symbol table, set up its type and structural type, and return its index
+int addglob(char *name, int type, int stype, int endlabel)
 {
   int y;
 
@@ -42,5 +41,6 @@ int addglob(char *name, int type, int stype)
   Gsym[y].name = strdup(name);
   Gsym[y].type = type;
   Gsym[y].stype = stype;
+  Gsym[y].endlabel = endlabel;
   return y;
 }

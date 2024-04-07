@@ -4,6 +4,29 @@
 
 // Parsing of expressions with Pratt parsing
 
+// Parse a function call with a single expression argument. Return its AST.
+struct ASTnode *funccall(void)
+{
+  struct ASTnode *tree;
+  int id;
+
+  if ((id = findglob(Text)) == -1)
+  {
+    fatals("Undeclared function", Text);
+  }
+
+  if (Gsym[id].stype != S_FUNCTION)
+  {
+    fatals("Not a function", Text);
+  }
+
+  lparen();
+  tree = binexpr(0);
+  tree = mkastunary(A_FUNCCALL, Gsym[id].type, tree, id);
+  rparen();
+  return tree;
+}
+
 // Parse a primary factor and return an AST node representing it
 static struct ASTnode *primary(void)
 {
@@ -13,13 +36,21 @@ static struct ASTnode *primary(void)
   switch (Token.token)
   {
   case T_INTLIT:
-    n = mkastleaf(
-        A_INTLIT,
-        ((Token.intvalue >= 0) && (Token.intvalue < 256)) ? P_CHAR : P_INT,
-        Token.intvalue);
+    if ((Token.intvalue >= 0) && (Token.intvalue < 256))
+      n = mkastleaf(A_INTLIT, P_CHAR, Token.intvalue);
+    else
+      n = mkastleaf(A_INTLIT, P_INT, Token.intvalue);
     break;
 
   case T_IDENT:
+    // Could be a variable or a function call; scan in next token to find out
+    scan(&Token);
+
+    if (Token.token == T_LPAREN)
+      return funccall();
+
+    reject_token(&Token);
+
     if ((id = findglob(Text)) == -1)
       fatals("Unknown variable", Text);
     n = mkastleaf(A_IDENT, Gsym[id].type, id); // ID is index in global symbol table

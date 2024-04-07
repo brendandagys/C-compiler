@@ -27,24 +27,27 @@ enum
   T_LE,
   T_GE,
 
+  // Type keywords
+  T_VOID,
+  T_CHAR,
+  T_INT,
+  T_LONG,
+  // Structural tokens
   T_INTLIT,
   T_SEMI,
   T_ASSIGN,
   T_IDENT,
-
   T_LBRACE,
   T_RBRACE,
   T_LPAREN,
   T_RPAREN,
-  // Keywords
+  // Other keywords
   T_PRINT,
-  T_INT,
   T_IF,
   T_ELSE,
   T_WHILE,
   T_FOR,
-  T_VOID,
-  T_CHAR,
+  T_RETURN,
 };
 
 struct token
@@ -80,6 +83,9 @@ enum
   A_WHILE,
   A_FUNCTION,
   A_WIDEN,
+  A_RETURN,
+
+  A_FUNCCALL,
 };
 
 // Primitive types
@@ -89,6 +95,7 @@ enum
   P_VOID,
   P_CHAR,
   P_INT,
+  P_LONG,
 };
 
 struct ASTnode
@@ -118,7 +125,8 @@ enum
 // Symbol table structure
 struct symtable
 {
-  char *name; // Name of a symbol
-  int type;   // Primitive type for the symbol
-  int stype;  // Structural type for the symbol
+  char *name;   // Name of a symbol
+  int type;     // Primitive type for the symbol
+  int stype;    // Structural type for the symbol
+  int endlabel; // For `S_FUNCTION`, the end label
 };

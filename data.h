@@ -3,8 +3,9 @@
 #endif
 
 // Global variables
-extern_ int Line;    // Current line number
-extern_ int Putback; // Character "put back" by scanner
+extern_ int Line;       // Current line number
+extern_ int Putback;    // Character "put back" by scanner
+extern_ int Functionid; // Symbol ID of the current function
 extern_ FILE *Infile;
 extern_ FILE *Outfile;
 extern_ struct token Token;             // Last token scanned

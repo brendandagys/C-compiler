@@ -110,9 +110,17 @@ static int keyword(char *s)
     if (!strcmp(s, "int"))
       return T_INT;
     break;
+  case 'l':
+    if (!strcmp(s, "long"))
+      return T_LONG;
+    break;
   case 'p':
     if (!strcmp(s, "print"))
       return T_PRINT;
+    break;
+  case 'r':
+    if (!strcmp(s, "return"))
+      return T_RETURN;
     break;
   case 'w':
     if (!strcmp(s, "while"))
@@ -127,10 +135,28 @@ static int keyword(char *s)
   return 0;
 }
 
+// A pointer to a rejected token
+static struct token *Rejtoken = NULL;
+
+// Reject the last token scanned
+void reject_token(struct token *t)
+{
+  if (Rejtoken != NULL)
+    fatal("Can't reject token twice");
+  Rejtoken = t;
+}
+
 // Updates passed-in `token` and returns 1 if valid token, 0 if EOF
 int scan(struct token *t)
 {
   int c, tokentype;
+
+  if (Rejtoken != NULL)
+  {
+    t = Rejtoken;
+    Rejtoken = NULL;
+    return 1;
+  }
 
   c = skip();
 
