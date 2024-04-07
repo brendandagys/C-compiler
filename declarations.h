@@ -13,14 +13,17 @@ struct ASTnode *mkastunary(int op, int type, struct ASTnode *left, int intvalue)
 int genlabel(void);
 int genAST(struct ASTnode *n, int reg, int parentASTop);
 void genpreamble(void);
+void genpostamble(void);
 void genfreeregs(void);
 void genprintint(int reg);
 void genglobsym(int id);
 int genprimsize(int type);
+void genreturn(int reg, int id);
 
 // `code_generation_x86-64.c`
 void freeall_registers(void);
 void cgpreamble(void);
+void cgpostamble(void);
 void cgfuncpreamble(int id);
 void cgfuncpostamble(int id);
 int cgloadint(int value, int type);

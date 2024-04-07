@@ -14,6 +14,7 @@ static void init()
 {
   Line = 1;
   Putback = '\n';
+  Globs = 0;
 }
 
 // Print instructions if program arguments are incorrect
@@ -59,6 +60,8 @@ int main(int argc, char *argv[])
     if (Token.token == T_EOF)
       break;
   }
+
+  genpostamble();
 
   fclose(Infile);
   fclose(Outfile);

@@ -92,6 +92,9 @@ void cgpreamble(void)
         Outfile);
 }
 
+// Nothing to do
+void cgpostamble() {}
+
 // Print out a function preamble
 void cgfuncpreamble(int id)
 {
@@ -273,10 +276,10 @@ int cgcompare_and_set(int ASTop, int r1, int r2)
 }
 
 // Generate a label
-void cglabel(int l) { fprintf(Outfile, "L%d:\n", 1); }
+void cglabel(int l) { fprintf(Outfile, "L%d:\n", l); }
 
 // Generate a jump to a label
-void cgjump(int l) { fprintf(Outfile, "\tjmp\tL%d\n", 1); }
+void cgjump(int l) { fprintf(Outfile, "\tjmp\tL%d\n", l); }
 
 // Inverted jump instructions
 static char *invcmplist[] = {"jne", "je", "jge", "jle", "jg", "jl"};

@@ -159,6 +159,8 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
 
 void genpreamble(void) { cgpreamble(); }
 
+void genpostamble(void) { cgpostamble(); }
+
 void genfreeregs(void) { freeall_registers(); }
 
 void genprintint(int reg) { cgprintint(reg); }

@@ -4,8 +4,6 @@
 
 // Symbol table functions
 
-static int Globs = 0; // Index of next free global symbol slot
-
 // Determine if a symbol is in the global symbol table. Return its index or -1.
 int findglob(char *s)
 {
