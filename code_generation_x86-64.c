@@ -18,8 +18,7 @@ void freeall_registers(void)
   freereg[0] = freereg[1] = freereg[2] = freereg[3] = 1;
 }
 
-// Allocate a free register. Return the number of the register. Terminate if
-// none are free.
+// Allocate a free register. Return the number of the register. Terminate if none free.
 static int alloc_register(void)
 {
   for (int i = 0; i < 4; i++)
@@ -35,8 +34,7 @@ static int alloc_register(void)
   __builtin_unreachable();
 }
 
-// Return a register to the list of available registers. Terminate if already
-// available.
+// Return a register to the list of available registers. Terminate if already available.
 static void free_register(int reg)
 {
   if (freereg[reg] != 0)
@@ -323,4 +321,30 @@ void cgreturn(int reg, int id)
   }
 
   cgjump(Gsym[id].endlabel);
+}
+
+// Generate code to load the address of a global identifier into
+// a variable. Return a new register.
+int cgaddress(int id)
+{
+  int r = alloc_register();
+  fprintf(Outfile, "\tleaq\t%s(\%%rip), %s\n", Gsym[id].name, reglist[r]);
+  return r;
+}
+
+// Dereference a pointer to get the value it points at in the same register
+int cgderef(int r, int type)
+{
+  switch (type)
+  {
+  case P_CHARPTR:
+    fprintf(Outfile, "\tmovzbq\t(%s), %s\n", reglist[r], reglist[r]);
+    break;
+  case P_INTPTR:
+  case P_LONGPTR:
+    fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
+    break;
+  }
+
+  return r;
 }

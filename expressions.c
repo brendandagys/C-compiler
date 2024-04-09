@@ -58,6 +58,7 @@ static struct ASTnode *primary(void)
 
   default:
     fatald("Syntax error, token", Token.token);
+    __builtin_unreachable();
   }
 
   scan(&Token);
@@ -94,6 +95,41 @@ static int op_precedence(int tokentype)
   return prec;
 }
 
+// Parse a prefix expression and return an AST node representing it
+static struct ASTnode *prefix(void)
+{
+  struct ASTnode *tree;
+
+  switch (Token.token)
+  {
+  case T_AMPER:
+    // Get next token and parse it recursively as a prefix expression
+    scan(&Token);
+    tree = prefix();
+
+    if (tree->op != A_IDENT)
+      fatal("& operator must be followed by an identifier");
+
+    // Not a parent node; `A_IDENT` replaced with `A_ADDR`
+    tree->op = A_ADDR;
+    tree->type = pointer_to(tree->type);
+    break;
+  case T_STAR:
+    scan(&Token);
+    tree = prefix();
+
+    if (tree->op != A_IDENT && tree->op != A_DEREF)
+      fatal("* operator must be followed by an identifier or *");
+
+    tree = mkastunary(A_DEREF, value_at(tree->type), tree, 0); // Parent node...
+    break;
+  default:
+    tree = primary();
+  }
+
+  return tree;
+}
+
 // Return an AST tree whose root is a binary operator
 struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
 {
@@ -102,7 +138,7 @@ struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
   int tokentype;
 
   // Get primary tree on the left. Fetch next token at the same time.
-  left = primary();
+  left = prefix();
 
   tokentype = Token.token;
   if (tokentype == T_SEMI || tokentype == T_RPAREN)
@@ -133,7 +169,6 @@ struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
     left = mkastnode(arithop(tokentype), left->type, left, NULL, right, 0);
 
     tokentype = Token.token; // Update details of current token
-
     if (tokentype == T_SEMI || tokentype == T_RPAREN)
       return left;
   }

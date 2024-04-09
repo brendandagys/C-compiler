@@ -194,9 +194,7 @@ int scan(struct token *t)
     break;
   case '=':
     if ((c = next()) == '=')
-    {
       t->token = T_EQ;
-    }
     else
     {
       putback(c);
@@ -205,19 +203,13 @@ int scan(struct token *t)
     break;
   case '!':
     if ((c = next()) == '=')
-    {
       t->token = T_NE;
-    }
     else
-    {
       fatalc("Unrecognized character", c);
-    }
     break;
   case '<':
     if ((c = next()) == '=')
-    {
       t->token = T_LE;
-    }
     else
     {
       putback(c);
@@ -226,15 +218,21 @@ int scan(struct token *t)
     break;
   case '>':
     if ((c = next()) == '=')
-    {
       t->token = T_GE;
-    }
     else
     {
       putback(c);
       t->token = T_GT;
     }
     break;
+  case '&':
+    if ((c = next()) == '&')
+      t->token = T_LOGAND;
+    else
+    {
+      putback(c);
+      t->token = T_AMPER;
+    }
   default:
     if (isdigit(c))
     {

@@ -26,10 +26,10 @@ ARM_SRCS= \
 
 # COMPILE
 bin/b: $(SRCS)
-	cc -o bin/b -g $(SRCS)
+	cc -o bin/b -g -Wall $(SRCS)
 
 bin/b-arm:: $(ARM_SRCS)
-	cc -o bin/b-arm -g $(ARM_SRCS)
+	cc -o bin/b-arm -g -Wall $(ARM_SRCS)
 
 # ALL TESTS
 test: bin/b tests/runtests
@@ -39,13 +39,13 @@ test-arm: bin/b-arm tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
 # LAST TEST
-test14: bin/b tests/input14 lib/printint.c
-	bin/b tests/input14
+test15: bin/b tests/input15 lib/printint.c
+	bin/b tests/input15
 	cc -o out out.s lib/printint.c
 	./out
 
-test14-arm: bin/b-arm tests/input14 lib/printint.c
-	bin/b tests/input14
+test15-arm: bin/b-arm tests/input15 lib/printint.c
+	bin/b tests/input15
 	cc -o out out.s lib/printint.c
 	./out
 

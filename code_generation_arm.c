@@ -322,3 +322,31 @@ void cgreturn(int reg, int id)
   fprintf(Outfile, "\tmov\tr0, %s\n", reglist[reg]);
   cgjump(Gsym[id].endlabel);
 }
+
+// Generate code to load the address of a global identifier into
+// a variable. Return a new register.
+int cgaddress(int id)
+{
+  int r = alloc_register;
+
+  set_var_offset(id); // Get the offset to the variable
+  fprintf(Outfile, "\tmov\t%s, r3\n", reglist[r]);
+  return r;
+}
+
+// Dereference a pointer to get the value it points at in the same register
+int cgderef(int r, int type)
+{
+  switch (type)
+  {
+  case P_CHARPTR:
+    fprintf(Outfile, "\tldrb\t%s, [%s]\n", reglist[r], reglist[r]);
+    break;
+  case P_INTPTR:
+  case P_LONGPTR:
+    fprintf(Outfile, "\tldr\t%s, [%s]\n", reglist[r], reglist[r]);
+    break;
+  }
+
+  return r;
+}

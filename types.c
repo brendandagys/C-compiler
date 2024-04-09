@@ -46,3 +46,57 @@ int type_compatible(int *left, int *right, int onlyright)
   *left = *right = 0;
   return 1;
 }
+
+// Given a primitive type, return its respective pointer type
+int pointer_to(int type)
+{
+  int newtype;
+
+  switch (type)
+  {
+  case P_VOID:
+    newtype = P_VOIDPTR;
+    break;
+  case P_CHAR:
+    newtype = P_CHARPTR;
+    break;
+  case P_INT:
+    newtype = P_INTPTR;
+    break;
+  case P_LONG:
+    newtype = P_LONGPTR;
+    break;
+  default:
+    fatald("Unrecognized in `pointer_to()`: type", type);
+    __builtin_unreachable();
+  }
+
+  return newtype;
+}
+
+// Given a primitive pointer type, return its respective primitive type
+int value_at(int type)
+{
+  int newtype;
+
+  switch (type)
+  {
+  case P_VOIDPTR:
+    newtype = P_VOID;
+    break; // TODO: return directly
+  case P_CHARPTR:
+    newtype = P_CHAR;
+    break;
+  case P_INTPTR:
+    newtype = P_INT;
+    break;
+  case P_LONGPTR:
+    newtype = P_LONG;
+    break;
+  default:
+    fatald("Unrecognised in value_at: type", type);
+    __builtin_unreachable();
+  }
+
+  return newtype;
+}

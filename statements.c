@@ -11,7 +11,6 @@ static struct ASTnode *print_statement(void)
 {
   struct ASTnode *tree;
   int lefttype, righttype;
-  int reg;
 
   match(T_PRINT, "print");
   tree = binexpr(0);

@@ -41,6 +41,11 @@
 
  identifier: T_IDENT ;
 
+ prefix_expression: primary
+    | '*' prefix_expression
+    | '&' prefix_expression
+    ;
+
  expression: additive_expression
     ;
 
