@@ -134,7 +134,8 @@ static struct ASTnode *prefix(void)
 struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
 {
   struct ASTnode *left, *right;
-  int lefttype, righttype;
+  struct ASTnode *ltemp, *rtemp;
+  int ASTop;
   int tokentype;
 
   // Get primary tree on the left. Fetch next token at the same time.
@@ -153,16 +154,17 @@ struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
     // Recursively build a sub-tree with binexpr(<token precedence>)
     right = binexpr(OpPrec[tokentype]);
 
-    lefttype = left->type;
-    righttype = right->type;
+    ASTop = arithop(tokentype);
+    ltemp = modify_type(left, right->type, ASTop);
+    rtemp = modify_type(right, left->type, ASTop);
 
-    if (!type_compatible(&lefttype, &righttype, 0))
-      fatal("Incompatible types");
+    if (ltemp == NULL && rtemp == NULL)
+      fatal("Incompatible types in binary expression");
 
-    if (lefttype) // Will be `A_WIDEN` or `0`
-      left = mkastunary(lefttype, right->type, left, 0);
-    if (righttype)
-      right = mkastunary(righttype, left->type, right, 0);
+    if (ltemp != NULL) // Left <= right
+      left = ltemp;
+    if (rtemp != NULL) // Right <= left
+      right = rtemp;
 
     // Join that sub-tree with the left-hand sub-tree.
     // Convert the token into an AST operation at the same time.

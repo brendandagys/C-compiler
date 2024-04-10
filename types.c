@@ -2,49 +2,18 @@
 #include "data.h"
 #include "declarations.h"
 
-// Types and type handlind
+// Types and type handling
 
-// Given 2 primitive types, return `1` if compatible, else `0`.
-// `left` and `right` become either `0` or `A_WIDEN`.
-// `onlyright`: only widen left to right.
-
-int type_compatible(int *left, int *right, int onlyright)
+// Return true if a type is an int type of any size
+static int inttype(int type)
 {
-  int leftsize, rightsize;
+  return (type == P_CHAR || type == P_INT || type == P_LONG) ? 1 : 0;
+}
 
-  if (*left == *right)
-  {
-    *left = *right = 0;
-    return 1;
-  }
-
-  leftsize = genprimsize(*left);
-  rightsize = genprimsize(*right);
-
-  // Types with zero size are not compatible with anything
-  if ((leftsize == 0 || rightsize == 0))
-    return 0;
-
-  if (leftsize < rightsize)
-  {
-    *left = A_WIDEN;
-    *right = 0;
-    return 1;
-  }
-
-  if (rightsize < leftsize)
-  {
-    if (onlyright)
-      return 0;
-
-    *left = 0;
-    *right = A_WIDEN;
-    return 1;
-  }
-
-  // Anything left is the same size and thus is compatible
-  *left = *right = 0;
-  return 1;
+// Return true if a type is a pointer type
+static int ptrtype(int type)
+{
+  return (type == P_VOIDPTR || type == P_CHARPTR || type == P_INTPTR || type == P_LONGPTR) ? 1 : 0;
 }
 
 // Given a primitive type, return its respective pointer type
@@ -99,4 +68,52 @@ int value_at(int type)
   }
 
   return newtype;
+}
+
+// Given an AST tree and a type that we want it to become, possibly modify the
+// tree by widening or scaling so that it is compatible with this type. Return
+// the original tree if no changes occurred, a modified tree, or NULL if the
+// tree is not compatible with the given type.
+// If this will be part of a binary operation, the AST op is not zero.
+struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op)
+{
+  int ltype;
+  int lsize, rsize;
+
+  ltype = tree->type;
+
+  // Compare scalar int types
+  if (inttype(ltype) && inttype(rtype))
+  {
+    if (ltype == rtype)
+      return tree;
+
+    lsize = genprimsize(ltype);
+    rsize = genprimsize(rtype);
+
+    if (lsize > rsize)
+      return NULL;
+
+    if (lsize < rsize)
+      return mkastunary(A_WIDEN, rtype, tree, 0);
+  }
+
+  if (ptrtype(ltype)) // For pointers on the left
+  {
+    if (op == 0 && ltype == rtype) // Okay if same type on right and not doing a binary op
+      return tree;
+  }
+
+  if (op == A_ADD || op == A_SUBTRACT) // Can only scale for these operations
+  {
+    // Left in the int; right is the pointer.
+    if (inttype(ltype) && ptrtype(rtype))
+    {
+      rsize = genprimsize(value_at(rtype));
+      if (rsize > 1)
+        return mkastunary(A_SCALE, rtype, tree, rsize);
+    }
+  }
+
+  return NULL;
 }

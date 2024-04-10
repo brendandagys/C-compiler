@@ -221,6 +221,13 @@ int cgcall(int r, int id)
   return r;
 }
 
+// Shift a register left by a constant
+int cgshlconst(int r, int val)
+{
+  fprintf(Outfile, "\tlsl\t%s, %s, #%d\n", reglist[r], reglist[r], val);
+  return r;
+}
+
 // Store a register's value into a variable
 int cgstorglob(int r, int id)
 {

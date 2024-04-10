@@ -91,6 +91,7 @@ enum
   A_FUNCCALL,
   A_DEREF, // Dereference the pointer in the child node
   A_ADDR,  // Get the address of the identifier in this node
+  A_SCALE,
 };
 
 // Primitive types
@@ -111,13 +112,14 @@ struct ASTnode
 {
   int op;               // "Operation" to be performed on this tree
   int type;             // Type of any expression this tree generates
-  struct ASTnode *left; // Left and right child trees
+  struct ASTnode *left; // Left, middle, and right child trees
   struct ASTnode *mid;
   struct ASTnode *right;
   union
   {
-    int intvalue; // For `A_INTLIT`, the integer value
-    int id;       // For `A_IDENT` + `A_LVIDENT`: the symbol slot number
+    int intvalue; // For `A_INTLIT`: the integer value
+    int id;       // For `A_IDENT` + `A_FUNCTION` + `A_FUNCCALL`: the symbol slot number
+    int size;     // For `A_SCALE`: the size to scale by
   } v;
 };
 
