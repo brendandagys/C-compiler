@@ -16,10 +16,24 @@
 
  print_statement: 'print' expression ';'  ;
  
- declaration: 'int' identifier ';'  ;
- 
- function_declaration: 'void' identifier '(' ')' compound_statement  ;
- 
+ global_declarations : global_declarations 
+      | global_declaration global_declarations
+      ;
+
+ global_declaration: function_declaration | variable_declaration   ;
+
+ function_declaration: type identifier '(' ')' compound_statement   ;
+
+ variable_declaration: type identifier_list ';'   ;
+
+ type: type_keyword opt_pointer   ;
+
+ type_keyword: 'void' | 'char' | 'int' | 'long'   ;
+
+ opt_pointer: <empty> | '*' opt_pointer   ;
+
+ identifier_list: identifier | identifier ',' identifier_list   ;
+
  assignment_statement: identifier '=' expression ';'   ;
 
  if_statement: if_head

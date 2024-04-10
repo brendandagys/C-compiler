@@ -39,13 +39,13 @@ test-arm: bin/b-arm tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
 # LAST TEST
-test15: bin/b tests/input15 lib/printint.c
-	bin/b tests/input15
+test16: bin/b tests/input16 lib/printint.c
+	bin/b tests/input16
 	cc -o out out.s lib/printint.c
 	./out
 
-test15-arm: bin/b-arm tests/input15 lib/printint.c
-	bin/b tests/input15
+test16-arm: bin/b-arm tests/input16 lib/printint.c
+	bin/b tests/input16
 	cc -o out out.s lib/printint.c
 	./out
 

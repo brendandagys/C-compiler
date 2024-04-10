@@ -178,6 +178,8 @@ static struct ASTnode *return_statement(void)
 // Parse a single statement and return its AST
 static struct ASTnode *single_statement(void)
 {
+  int type;
+
   switch (Token.token)
   {
   case T_PRINT:
@@ -185,7 +187,13 @@ static struct ASTnode *single_statement(void)
   case T_CHAR:
   case T_INT:
   case T_LONG:
-    variable_declaration();
+    // Beginning of a variable declaration.
+    // Parse the type and get the identifier.
+    // Then, parse the rest of the declaration.
+    // CURRENTLY THESE ARE GLOBALS.
+    type = parse_type();
+    ident();
+    variable_declaration(type);
     return NULL; // No AST generated
   case T_IDENT:
     return assignment_statement();

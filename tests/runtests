@@ -2,8 +2,8 @@
 # Run each test and compare
 # against known good output
 
-if [ ! -f ../bin/b ]
-then echo "Need to build ../bin/b first!"; exit 1
+if [ ! -f ../comp1 ]
+then echo "Need to build ../comp1 first!"; exit 1
 fi
 
 for i in input*
@@ -11,8 +11,8 @@ do if [ ! -f "out.$i" ]
    then echo "Can't run test on $i, no output file!"
    else
      echo -n $i
-     ../bin/b $i
-     cc -o out out.s
+     ../comp1 $i
+     cc -o out out.s ../lib/printint.c
      ./out > trial.$i
      cmp -s "out.$i" "trial.$i"
      if [ "$?" -eq "1" ]

@@ -39,30 +39,43 @@ int parse_type(void)
   return type; // Exit with next token already scanned
 }
 
-// Parse the declaration of a variable.
-// Ensure `int <identifier>;`
-void variable_declaration(void)
+// Parse the declaration of a list of variables.
+// The identifier has been scanned and we have the type.
+void variable_declaration(int type)
 {
-  int id, type;
+  int id;
 
-  type = parse_type();
-  ident();
-  id = addglob(Text, type, S_VARIABLE, 0); // Text contains last identifier, via `scanident()`
-  genglobsym(id);
-  semi();
+  while (1)
+  {
+    id = addglob(Text, type, S_VARIABLE, 0); // Text contains last identifier, via `scanident()`
+    genglobsym(id);
+
+    if (Token.token == T_SEMI)
+    {
+      scan(&Token);
+      return;
+    }
+
+    if (Token.token == T_COMMA)
+    {
+      scan(&Token);
+      ident();
+      continue;
+    }
+
+    fatal("Missing `,` or `;` after identifier");
+  }
 }
 
-// Parse the declaration of a function
-struct ASTnode *function_declaration(void)
+// Parse the declaration of a function.
+// The identifier has been scanned and we have the type.
+struct ASTnode *function_declaration(int type)
 {
   struct ASTnode *tree, *finalstatement;
-  int nameslot, type, endlabel;
-
-  type = parse_type();
-  ident();
+  int nameslot, endlabel;
 
   // Get a label ID for the end label, add the function to the symbol table,
-  // and set the `Functionid` global to the function's symbol ID
+  // and set the `Functionid` global to the function's symbol table index
   endlabel = genlabel();
   nameslot = addglob(Text, type, S_FUNCTION, endlabel);
   Functionid = nameslot;
@@ -85,4 +98,30 @@ struct ASTnode *function_declaration(void)
   }
 
   return mkastunary(A_FUNCTION, type, tree, nameslot);
+}
+
+// Parse one or more global declarations, either variables or functions
+void global_declarations(void)
+{
+  struct ASTnode *tree;
+  int type;
+
+  while (1)
+  {
+    type = parse_type();
+    ident();
+
+    if (Token.token == T_LPAREN)
+    {
+      tree = function_declaration(type);
+      genAST(tree, NOREG, 0);
+    }
+    else
+    {
+      variable_declaration(type);
+    }
+
+    if (Token.token == T_EOF)
+      break;
+  }
 }

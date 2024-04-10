@@ -27,8 +27,6 @@ static void usage(char *prog)
 // Open/scan the file and its tokens
 int main(int argc, char *argv[])
 {
-  struct ASTnode *tree;
-
   if (argc != 2)
     usage(argv[0]);
 
@@ -51,16 +49,7 @@ int main(int argc, char *argv[])
 
   scan(&Token); // Get the first token from the input
   genpreamble();
-
-  while (1)
-  {
-    tree = function_declaration();
-    genAST(tree, NOREG, 0);
-
-    if (Token.token == T_EOF)
-      break;
-  }
-
+  global_declarations(); // Parse the global declarations
   genpostamble();
 
   fclose(Infile);
