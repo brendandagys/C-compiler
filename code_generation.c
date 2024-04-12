@@ -29,7 +29,7 @@ static int genIF(struct ASTnode *n)
   genfreeregs();
 
   // Generate the true compound statement
-  genAST(n->mid, NOREG, n->op);
+  genAST(n->mid, NOLABEL, n->op);
   genfreeregs();
 
   // If ELSE clause, generate the jump to skip to the end
@@ -41,7 +41,7 @@ static int genIF(struct ASTnode *n)
   // If ELSE clause, generate the false compound statement and `Lend` label
   if (n->right)
   {
-    genAST(n->right, NOREG, n->op);
+    genAST(n->right, NOLABEL, n->op);
     genfreeregs();
     cglabel(Lend);
   }
@@ -63,7 +63,7 @@ static int genWHILE(struct ASTnode *n)
   genfreeregs();
 
   // Generate the compound statement in the loop body
-  genAST(n->right, NOREG, n->op);
+  genAST(n->right, NOLABEL, n->op);
   genfreeregs();
 
   cgjump(Lstart); // Jump back to condition
@@ -75,7 +75,7 @@ static int genWHILE(struct ASTnode *n)
 // Given an AST node, the register (if any) holding the previous rvalue, and the
 // AST op of the parent, recursively generate assembly code. Return the register
 // with the final tree value.
-int genAST(struct ASTnode *n, int reg, int parentASTop)
+int genAST(struct ASTnode *n, int label, int parentASTop)
 {
   int leftreg, rightreg;
 
@@ -88,14 +88,14 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
     return genWHILE(n);
   case A_GLUE:
     // Do each child statement. Free the registers after each child.
-    genAST(n->left, NOREG, n->op);
+    genAST(n->left, NOLABEL, n->op);
     genfreeregs();
-    genAST(n->right, NOREG, n->op);
+    genAST(n->right, NOLABEL, n->op);
     genfreeregs();
     return NOREG;
   case A_FUNCTION:
     cgfuncpreamble(n->v.id);
-    genAST(n->left, NOREG, n->op);
+    genAST(n->left, NOLABEL, n->op);
     cgfuncpostamble(n->v.id);
     return NOREG;
   }
@@ -104,9 +104,9 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
 
   // Get left and right sub-tree values
   if (n->left)
-    leftreg = genAST(n->left, NOREG, n->op);
+    leftreg = genAST(n->left, NOLABEL, n->op);
   if (n->right)
-    rightreg = genAST(n->right, leftreg, n->op);
+    rightreg = genAST(n->right, NOLABEL, n->op);
 
   switch (n->op)
   {
@@ -127,22 +127,28 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
     // If parent AST node is A_IF or A_WHILE, generate a compare followed by a jump.
     // Otherwise, compare registers and set one to 1 or 0 based on the comparison.
     if (parentASTop == A_IF || parentASTop == A_WHILE)
-      return cgcompare_and_jump(n->op, leftreg, rightreg, reg);
+      return cgcompare_and_jump(n->op, leftreg, rightreg, label);
     else
       return cgcompare_and_set(n->op, leftreg, rightreg);
   case A_INTLIT:
     return cgloadint(n->v.intvalue, n->type);
   case A_IDENT:
-    return cgloadglob(n->v.id);
-  case A_LVIDENT:
-    return cgstorglob(reg, n->v.id);
+    // Load value if an r-value or are being dereferenced
+    if (n->rvalue || parentASTop == A_DEREF)
+      return cgloadglob(n->v.id);
+    else
+      return NOREG;
   case A_ASSIGN:
-    return rightreg; // Work is already done; return result
-  case A_PRINT:
-    // Print left child's value and return no register
-    genprintint(leftreg);
-    genfreeregs();
-    return NOREG;
+    // Are we assigning to an identifier or through a pointer?
+    switch (n->right->op)
+    {
+    case A_IDENT:
+      return cgstorglob(leftreg, n->right->v.id);
+    case A_DEREF:
+      return cgstorderef(leftreg, rightreg, n->right->type);
+    default:
+      fatald("Can't `A_ASSIGN` in `genAST()`, op", n->op);
+    }
   case A_WIDEN: // `cgwiden()` does nothing, but leave this node for other hardware platforms
     // Widen child's type to the parent's type
     return cgwiden(leftreg, n->left->type, n->type);
@@ -154,7 +160,10 @@ int genAST(struct ASTnode *n, int reg, int parentASTop)
   case A_ADDR:
     return cgaddress(n->v.id);
   case A_DEREF:
-    return cgderef(leftreg, n->left->type);
+    if (n->rvalue) // Dereference to get the value pointed at
+      return cgderef(leftreg, n->left->type);
+    else // Leave for `A_ASSIGN` to store through the pointer
+      return leftreg;
   case A_SCALE:
     // Small optimization: use bit-shift if scale value is a known power of 2
     switch (n->v.size)

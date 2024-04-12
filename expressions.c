@@ -66,9 +66,9 @@ static struct ASTnode *primary(void)
   return n;
 }
 
-// Convert a binary operator token into an AST operation.
+// Convert a binary operator token into a binary AST operation.
 // We rely on a 1:1 mapping from token to AST operation.
-static int arithop(int tokentype)
+static int binastop(int tokentype)
 {
   if (tokentype > T_EOF && tokentype < T_INTLIT)
     return tokentype;
@@ -76,12 +76,19 @@ static int arithop(int tokentype)
   __builtin_unreachable();
 }
 
+// Return true if a token is right-associative
+static int rightassoc(int tokentype)
+{
+  return (tokentype == T_ASSIGN) ? 1 : 0;
+}
+
 // Operator precedence for each token. MUST MATCH ORDER OF TOKENS (`definitions.h`).
 static int OpPrec[] = {
-    0, 10, 10,     // T_EOF, T_PLUS, T_MINUS
-    20, 20,        // T_STAR, T_SLASH
-    30, 30,        // T_EQ, T_NE
-    40, 40, 40, 40 // T_LT, T_GT, T_LE, T_GE
+    0, 10,         // T_EOF, T_ASSIGN
+    20, 20,        // T_PLUS, T_MINUS
+    30, 30,        // T_STAR, T_SLASH
+    40, 40,        // T_EQ, T_NE
+    50, 50, 50, 50 // T_LT, T_GT, T_LE, T_GE
 };
 
 // Check that we have a binary operator and return its precedence
@@ -124,7 +131,7 @@ static struct ASTnode *prefix(void)
     tree = mkastunary(A_DEREF, value_at(tree->type), tree, 0); // Parent node...
     break;
   default:
-    tree = primary();
+    tree = primary(); // Identifier or integer literal...
   }
 
   return tree;
@@ -143,10 +150,14 @@ struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
 
   tokentype = Token.token;
   if (tokentype == T_SEMI || tokentype == T_RPAREN)
+  {
+    left->rvalue = 1;
     return left;
+  }
 
   // While current token precedence > previous token precedence...
-  while (op_precedence(tokentype) > ptp)
+  while ((op_precedence(tokentype) > ptp) ||
+         (rightassoc(tokentype) && op_precedence(tokentype) == ptp))
   {
     // Read in the next integer literal or identifier
     scan(&Token);
@@ -154,27 +165,47 @@ struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
     // Recursively build a sub-tree with binexpr(<token precedence>)
     right = binexpr(OpPrec[tokentype]);
 
-    ASTop = arithop(tokentype);
-    ltemp = modify_type(left, right->type, ASTop);
-    rtemp = modify_type(right, left->type, ASTop);
+    ASTop = binastop(tokentype);
 
-    if (ltemp == NULL && rtemp == NULL)
-      fatal("Incompatible types in binary expression");
+    if (ASTop == A_ASSIGN)
+    {
+      right->rvalue = 1; // Mark the right as an r-value
+      right = modify_type(right, left->type, 0);
+      if (right == NULL)
+        fatal("Incompatible expression in assignment");
 
-    if (ltemp != NULL) // Left <= right
-      left = ltemp;
-    if (rtemp != NULL) // Right <= left
-      right = rtemp;
+      ltemp = left; // Swap
+      left = right;
+      right = ltemp;
+    }
+    else
+    {
+      // Not doing an assignment, so both trees should be r-values...
+      left->rvalue = 1;
+      right->rvalue = 1;
 
+      ltemp = modify_type(left, right->type, ASTop);
+      rtemp = modify_type(right, left->type, ASTop);
+
+      if (ltemp == NULL && rtemp == NULL)
+        fatal("Incompatible types in binary expression");
+
+      if (ltemp != NULL) // Left <= right
+        left = ltemp;
+      if (rtemp != NULL) // Right <= left
+        right = rtemp;
+    }
     // Join that sub-tree with the left-hand sub-tree.
     // Convert the token into an AST operation at the same time.
-    left = mkastnode(arithop(tokentype), left->type, left, NULL, right, 0);
+    left = mkastnode(binastop(tokentype), left->type, left, NULL, right, 0);
 
     tokentype = Token.token; // Update details of current token
     if (tokentype == T_SEMI || tokentype == T_RPAREN)
-      return left;
+      left->rvalue = 1;
+    return left;
   }
 
   // Return the current tree when current precedence <= previous precedence
+  left->rvalue = 1;
   return left;
 }

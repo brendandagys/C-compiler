@@ -7,58 +7,6 @@
 // Prototypes
 static struct ASTnode *single_statement(void);
 
-static struct ASTnode *print_statement(void)
-{
-  struct ASTnode *tree;
-
-  match(T_PRINT, "print");
-  tree = binexpr(0);
-  tree = modify_type(tree, P_INT, 0);
-
-  if (tree == NULL)
-    fatal("Incompatible type to print");
-
-  tree = mkastunary(A_PRINT, P_NONE, tree, 0);
-
-  // Semi handled in `compound_statement()`
-
-  return tree;
-}
-
-static struct ASTnode *assignment_statement(void)
-{
-  struct ASTnode *left, *right, *tree;
-  int id;
-
-  ident();
-
-  // Could be a variable or a function call (next token is a '(')
-  if (Token.token == T_LPAREN)
-  {
-    return funccall();
-  }
-
-  // No need to reject token, because next token MUST then be `=`
-  if ((id = findglob(Text)) == -1)
-  {
-    fatals("Undeclared variable", Text);
-  }
-
-  right = mkastleaf(A_LVIDENT, Gsym[id].type, id);
-  match(T_ASSIGN, "=");
-  left = binexpr(0);
-  left = modify_type(left, right->type, 0);
-
-  if (left == NULL)
-    fatal("Incompatible expression in assignment");
-
-  tree = mkastnode(A_ASSIGN, P_INT, left, NULL, right, 0); // Assign left child to right child
-
-  // Semi handled in `compound_statement()`
-
-  return tree;
-}
-
 // Parse an IF statement, including an optional ELSE clause, and return its AST
 static struct ASTnode *if_statement(void)
 {
@@ -164,8 +112,6 @@ static struct ASTnode *single_statement(void)
 
   switch (Token.token)
   {
-  case T_PRINT:
-    return print_statement();
   case T_CHAR:
   case T_INT:
   case T_LONG:
@@ -177,8 +123,6 @@ static struct ASTnode *single_statement(void)
     ident();
     variable_declaration(type);
     return NULL; // No AST generated
-  case T_IDENT:
-    return assignment_statement();
   case T_IF:
     return if_statement();
   case T_WHILE:
@@ -188,8 +132,8 @@ static struct ASTnode *single_statement(void)
   case T_RETURN:
     return return_statement();
   default:
-    fatald("Syntax error, token", Token.token);
-    __builtin_unreachable();
+    // For now, see if this is an expression. This catches assignment statements.
+    return binexpr(0);
   }
 }
 
@@ -206,8 +150,7 @@ struct ASTnode *compound_statement(void)
     tree = single_statement();
 
     // Some statements must be followed by a semicolon
-    if (tree != NULL && (tree->op == A_PRINT ||
-                         tree->op == A_ASSIGN ||
+    if (tree != NULL && (tree->op == A_ASSIGN ||
                          tree->op == A_RETURN ||
                          tree->op == A_FUNCCALL))
       semi();
