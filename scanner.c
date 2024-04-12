@@ -49,6 +49,45 @@ static int skip(void)
   return c;
 }
 
+// Return the next character from a character or string literal.
+// Doesn't recognize octal character codings, etc.
+static int scanch(void)
+{
+  int c = next();
+
+  if (c == '\\')
+  {
+    switch (c = next())
+    {
+    case 'a':
+      return '\a';
+    case 'b':
+      return '\b';
+    case 'f':
+      return '\f';
+    case 'n':
+      return '\n';
+    case 'r':
+      return '\r';
+    case 't':
+      return '\t';
+    case 'v':
+      return '\v';
+    case '\\':
+      return '\\';
+    case '"':
+      return '"';
+    case '\'':
+      return '\'';
+    default:
+      fatalc("unknown escape sequence", c);
+    }
+  }
+
+  return c; // An ordinary character
+}
+
+// Scan an integer literal from the input file and return it
 static int scanint(int c)
 {
   int k, val = 0;
@@ -63,6 +102,26 @@ static int scanint(int c)
   // We hit a non-integer character. Put it back.
   putback(c);
   return val;
+}
+
+// Scan in a string literal and store it in `buf[]`. Return the string's length.
+static int scanstr(char *buf)
+{
+  int i, c;
+
+  for (i = 0; i < TEXTLEN - 1; i++)
+  {
+    if ((c = scanch()) == '"')
+    {
+      buf[i] = '\0';
+      return i;
+    }
+    buf[i] = c;
+  }
+
+  fatal("String literal too long");
+
+  return 0;
 }
 
 // Scan an identifier from the input file and store it in `buf[]`. Return the identifier's length.
@@ -238,6 +297,18 @@ int scan(struct token *t)
       putback(c);
       t->token = T_AMPER;
     }
+    break;
+  case '\'':
+    // If a quote, scan in the literal character value and the trailing quote
+    t->intvalue = scanch();
+    t->token = T_INTLIT;
+    if (next() != '\'')
+      fatal("Expected '\\'' at end of char literal");
+    break;
+  case '"':
+    // Scan in a literal string
+    scanstr(Text);
+    t->token = T_STRLIT;
     break;
   default:
     if (isdigit(c))

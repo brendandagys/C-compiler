@@ -16,8 +16,8 @@ int genAST(struct ASTnode *n, int label, int parentASTop);
 void genpreamble(void);
 void genpostamble(void);
 void genfreeregs(void);
-void genprintint(int reg);
 void genglobsym(int id);
+int genglobstr(char *strvalue);
 int genprimsize(int type);
 
 // `code_generation_x86-64.c`
@@ -28,15 +28,16 @@ void cgfuncpreamble(int id);
 void cgfuncpostamble(int id);
 int cgloadint(int value, int type);
 int cgloadglob(int id);
+int cgloadglobstr(int id);
 int cgadd(int r1, int r2);
 int cgsub(int r1, int r2);
 int cgmul(int r1, int r2);
 int cgdiv(int r1, int r2);
 int cgshlconst(int r, int val);
-void cgprintint(int r);
 int cgcall(int r, int id);
 int cgstorglob(int r, int id);
 void cgglobsym(int id);
+void cgglobstr(int l, char *strvalue);
 int cgcompare_and_set(int ASTop, int r1, int r2);
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label);
 void cglabel(int l);

@@ -149,6 +149,14 @@ int cgloadglob(int id)
   return r;
 }
 
+// Given the label number of a global string, load its address into a new register
+int cgloadglobstr(int id)
+{
+  int r = alloc_register();
+  fprintf(Outfile, "\tleaq\tL%d(\%%rip), %s\n", id, reglist[r]);
+  return (r);
+}
+
 // Add 2 registers and return the number of the register with the result
 int cgadd(int r1, int r2)
 {
@@ -185,16 +193,6 @@ int cgdiv(int r1, int r2)
   fprintf(Outfile, "\tmovq\t%%rax,%s\n", reglist[r1]);
   free_register(r2);
   return r1;
-}
-
-// There's no x86-64 instruction to print a register as a decimal, so the
-// preamble contains `printint()` that takes a register argument and calls
-// `printf()`
-void cgprintint(int r)
-{
-  fprintf(Outfile, "\tmovq\t%s, %%rdi\n", reglist[r]);
-  fprintf(Outfile, "\tcall\tprintint\n");
-  free_register(r);
 }
 
 // Call a function with one argument from the given register. Return register with result.
@@ -282,6 +280,18 @@ void cgglobsym(int id)
       fatald("Unknown typesize in `cgglobsym()`: ", typesize);
     }
   }
+}
+
+// Generate a global string and its start label
+void cgglobstr(int l, char *strvalue)
+{
+  char *cptr;
+  cglabel(l);
+  for (cptr = strvalue; *cptr; cptr++)
+  {
+    fprintf(Outfile, "\t.byte\t%d\n", *cptr);
+  }
+  fprintf(Outfile, "\t.byte\t0\n");
 }
 
 // Comparison instructions in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE

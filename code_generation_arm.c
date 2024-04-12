@@ -203,15 +203,6 @@ int cgdiv(int r1, int r2)
   return r1;
 }
 
-// Call `printint()` with the given register
-void cgprintint(int r)
-{
-  fprintf(Outfile, "\tmov\tr0, %s\n", reglist[r]);
-  fprintf(Outfile, "\tbl\tprintint\n");
-  fprintf(Outfile, "\tnop\n");
-  free_register(r);
-}
-
 // Call a function with 1 argument from the given register; return register with result
 int cgcall(int r, int id)
 {
