@@ -37,6 +37,8 @@ enum
   T_RBRACE,
   T_LPAREN,
   T_RPAREN,
+  T_LBRACKET,
+  T_RBRACKET,
   T_AMPER,
   T_LOGAND,
   T_COMMA,
@@ -124,6 +126,7 @@ enum
 {
   S_VARIABLE,
   S_FUNCTION,
+  S_ARRAY,
 };
 
 // Symbol table structure
@@ -133,4 +136,5 @@ struct symtable
   int type;     // Primitive type for the symbol
   int stype;    // Structural type for the symbol
   int endlabel; // For `S_FUNCTION`, the end label
+  int size;     // Number of elements in the symbol
 };

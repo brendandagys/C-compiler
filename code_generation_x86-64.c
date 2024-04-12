@@ -256,11 +256,32 @@ int cgprimsize(int type)
 // Generate a global symbol
 void cgglobsym(int id)
 {
-  int typesize;
+  int typesize = cgprimsize(Gsym[id].type);
 
-  typesize = cgprimsize(Gsym[id].type);
+  // Generate the global identity and the label
+  fprintf(Outfile, "\t.data\n"
+                   "\t.globl\t%s\n",
+          Gsym[id].name);
+  fprintf(Outfile, "%s:", Gsym[id].name);
 
-  fprintf(Outfile, "\t.comm\t%s,%d,%d\n", Gsym[id].name, typesize, typesize);
+  // Generate the space
+  for (int i = 0; i < Gsym[id].size; i++)
+  {
+    switch (typesize)
+    {
+    case 1:
+      fprintf(Outfile, "\t.byte\t0\n");
+      break;
+    case 4:
+      fprintf(Outfile, "\t.long\t0\n");
+      break;
+    case 8:
+      fprintf(Outfile, "\t.quad\t0\n");
+      break;
+    default:
+      fatald("Unknown typesize in `cgglobsym()`: ", typesize);
+    }
+  }
 }
 
 // Comparison instructions in AST order: A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE

@@ -188,6 +188,12 @@ int scan(struct token *t)
   case ')':
     t->token = T_RPAREN;
     break;
+  case '[':
+    t->token = T_LBRACKET;
+    break;
+  case ']':
+    t->token = T_RBRACKET;
+    break;
   case ',':
     t->token = T_COMMA;
     break;
@@ -232,6 +238,7 @@ int scan(struct token *t)
       putback(c);
       t->token = T_AMPER;
     }
+    break;
   default:
     if (isdigit(c))
     {

@@ -5,7 +5,7 @@
 // Types and type handling
 
 // Return true if a type is an int type of any size
-static int inttype(int type)
+int inttype(int type)
 {
   return (type == P_CHAR || type == P_INT || type == P_LONG) ? 1 : 0;
 }

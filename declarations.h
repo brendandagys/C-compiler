@@ -49,7 +49,6 @@ int cgderef(int r, int type);
 int cgstorderef(int r1, int r2, int type);
 
 // `expressions.c`
-struct ASTnode *funccall(void);
 struct ASTnode *binexpr(int ptp);
 
 // `statements.c`
@@ -70,7 +69,7 @@ void fatalc(char *s, int c);
 
 // `symbols.c`
 int findglob(char *s);
-int addglob(char *name, int type, int stype, int endlabel);
+int addglob(char *name, int type, int stype, int endlabel, int size);
 
 // `declarations.c`
 void variable_declaration(int type);
@@ -78,6 +77,7 @@ struct ASTnode *function_declaration(int type);
 void global_declarations(void);
 
 // `types.c`
+int inttype(int type);
 int parse_type(void);
 int pointer_to(int type);
 int value_at(int type);

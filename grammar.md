@@ -4,9 +4,7 @@
       |      '{' statement statements '}'
       ;
 
- statement: print_statement
-      |     declaration
-      |     assignment_statement
+ statement: declaration
       |     function_call
       |     if_statement
       |     while_statement
@@ -14,8 +12,6 @@
       |     return_statement
       ;
 
- print_statement: 'print' expression ';'  ;
- 
  global_declarations : global_declarations 
       | global_declaration global_declarations
       ;
@@ -24,7 +20,9 @@
 
  function_declaration: type identifier '(' ')' compound_statement   ;
 
- variable_declaration: type identifier_list ';'   ;
+ variable_declaration: type identifier_list ';'
+      | type identifier '[' P_INTLIT ']' ';'
+      ;
 
  type: type_keyword opt_pointer   ;
 
@@ -53,14 +51,25 @@
 
  return_statement: 'return' '(' expression ')'  ;
 
- identifier: T_IDENT ;
-
- prefix_expression: primary
+ prefix_expression: primary_expression
     | '*' prefix_expression
     | '&' prefix_expression
     ;
 
+ primary_expression
+    : identifier
+    | CONSTANT
+    | STRING_LITERAL
+    | '(' expression ')'
+    ;
+
+ postfix_expression
+    : primary_expression
+    | postfix_expression '[' expression ']'
+
  expression: additive_expression
+    | primary_expression
+    | prefix_expression
     ;
 
  additive_expression:
@@ -73,6 +82,11 @@
            number
     |      number '*' multiplicative_expression
     |      number '/' multiplicative_expression
+    ;
+
+ identifier: T_IDENT ;
+
+ CONSTANT: number
     ;
 
  number: T_INTLIT

@@ -45,25 +45,42 @@ void variable_declaration(int type)
 {
   int id;
 
-  while (1)
+  if (Token.token == T_LBRACKET)
   {
-    id = addglob(Text, type, S_VARIABLE, 0); // Text contains last identifier, via `scanident()`
-    genglobsym(id);
+    scan(&Token);
 
-    if (Token.token == T_SEMI)
+    if (Token.token == T_INTLIT)
     {
-      scan(&Token);
-      return;
+      // Add as a known array and generate its space in assembly. Treat as a pointer to its elements' type.
+      id = addglob(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue);
+      genglobsym(id);
     }
 
-    if (Token.token == T_COMMA)
+    scan(&Token);
+    match(T_RBRACKET, "]");
+  }
+  else
+  {
+    while (1)
     {
-      scan(&Token);
-      ident();
-      continue;
-    }
+      id = addglob(Text, type, S_VARIABLE, 0, 1); // Text contains last identifier, via `scanident()`
+      genglobsym(id);
 
-    fatal("Missing `,` or `;` after identifier");
+      if (Token.token == T_SEMI)
+      {
+        scan(&Token);
+        return;
+      }
+
+      if (Token.token == T_COMMA)
+      {
+        scan(&Token);
+        ident();
+        continue;
+      }
+
+      fatal("Missing `,` or `;` after identifier");
+    }
   }
 }
 
@@ -77,7 +94,7 @@ struct ASTnode *function_declaration(int type)
   // Get a label ID for the end label, add the function to the symbol table,
   // and set the `Functionid` global to the function's symbol table index
   endlabel = genlabel();
-  nameslot = addglob(Text, type, S_FUNCTION, endlabel);
+  nameslot = addglob(Text, type, S_FUNCTION, endlabel, 0);
   Functionid = nameslot;
 
   lparen();
