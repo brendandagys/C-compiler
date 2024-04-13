@@ -56,6 +56,41 @@ static struct ASTnode *array_access(void)
   return left;
 }
 
+// Parse a postfix expression and return an AST node representing it.
+// The identifier is already in `Text`.
+static struct ASTnode *postfix(void)
+{
+  struct ASTnode *n;
+  int id;
+
+  scan(&Token); // Either a function call, array index, or variable
+
+  if (Token.token == T_LPAREN)
+    return funccall();
+
+  if (Token.token == T_LBRACKET)
+    return array_access();
+
+  if ((id = findglob(Text)) == -1 || Gsym[id].stype != S_VARIABLE)
+    fatals("Unknown variable", Text);
+
+  switch (Token.token)
+  {
+  case T_INC:
+    scan(&Token);
+    n = mkastleaf(A_POSTINC, Gsym[id].type, id);
+    break;
+  case T_DEC:
+    scan(&Token);
+    n = mkastleaf(A_POSTDEC, Gsym[id].type, id);
+    break;
+  default:
+    n = mkastleaf(A_IDENT, Gsym[id].type, id);
+  }
+
+  return n;
+}
+
 // Parse a primary factor and return an AST node representing it
 static struct ASTnode *primary(void)
 {
@@ -77,22 +112,7 @@ static struct ASTnode *primary(void)
     break;
 
   case T_IDENT:
-    // Either a variable, array index, or a function call; scan in next token to see
-    scan(&Token);
-
-    if (Token.token == T_LPAREN)
-      return funccall();
-
-    if (Token.token == T_LBRACKET)
-      return array_access();
-
-    reject_token(&Token);
-
-    if ((id = findglob(Text)) == -1 || Gsym[id].stype != S_VARIABLE)
-      fatals("Unknown variable", Text);
-
-    n = mkastleaf(A_IDENT, Gsym[id].type, id); // ID is index in global symbol table
-    break;
+    return postfix();
 
   case T_LPAREN: // Parenthesised expression
     scan(&Token);
@@ -106,7 +126,6 @@ static struct ASTnode *primary(void)
   }
 
   scan(&Token);
-
   return n;
 }
 
@@ -114,7 +133,7 @@ static struct ASTnode *primary(void)
 // We rely on a 1:1 mapping from token to AST operation.
 static int binastop(int tokentype)
 {
-  if (tokentype > T_EOF && tokentype < T_INTLIT)
+  if (tokentype > T_EOF && tokentype <= T_SLASH)
     return tokentype;
   fatald("Syntax error, token", tokentype);
   __builtin_unreachable();
@@ -128,17 +147,19 @@ static int rightassoc(int tokentype)
 
 // Operator precedence for each token. MUST MATCH ORDER OF TOKENS (`definitions.h`).
 static int OpPrec[] = {
-    0, 10,         // T_EOF, T_ASSIGN
-    20, 20,        // T_PLUS, T_MINUS
-    30, 30,        // T_STAR, T_SLASH
-    40, 40,        // T_EQ, T_NE
-    50, 50, 50, 50 // T_LT, T_GT, T_LE, T_GE
+    0, 10, 20, 30,  // T_EOF, T_ASSIGN, T_LOGOR, T_LOGAND
+    40, 50, 60,     // T_OR, T_XOR, T_AMPER
+    70, 70,         // T_EQ, T_NE
+    80, 80, 80, 80, // T_LT, T_GT, T_LE, T_GE
+    90, 90,         // T_LSHIFT, T_RSHIFT
+    100, 100,       // T_PLUS, T_MINUS
+    110, 110,       // T_STAR, T_SLASH
 };
 
 // Check that we have a binary operator and return its precedence
 static int op_precedence(int tokentype)
 {
-  if (tokentype >= T_VOID)
+  if (tokentype > T_SLASH)
     fatald("Token with no precedence in `op_precedence()`:", tokentype);
 
   int prec = OpPrec[tokentype];
@@ -169,6 +190,7 @@ static struct ASTnode *prefix(void)
     // Not a parent node; `A_IDENT` replaced with `A_ADDR`
     tree->op = A_ADDR;
     tree->type = pointer_to(tree->type);
+    // `tree` is an l-value...we want address of the variable, not its value
     break;
   case T_STAR:
     scan(&Token);
@@ -178,6 +200,44 @@ static struct ASTnode *prefix(void)
       fatal("* operator must be followed by an identifier or *");
 
     tree = mkastunary(A_DEREF, value_at(tree->type), tree, 0); // Parent node...
+    break;
+  case T_MINUS:
+    scan(&Token);
+    tree = prefix();
+    tree->rvalue = 1;
+    // Widen to int so that it's signed (char may not be). Must be signed to negate.
+    tree = modify_type(tree, P_INT, 0);
+    tree = mkastunary(A_NEGATE, tree->type, tree, 0);
+    break;
+  case T_INVERT:
+    scan(&Token);
+    tree = prefix();
+    tree->rvalue = 1;
+    tree = mkastunary(A_INVERT, tree->type, tree, 0);
+    break;
+  case T_LOGNOT:
+    scan(&Token);
+    tree = prefix();
+    tree->rvalue = 1;
+    tree = mkastunary(A_LOGNOT, tree->type, tree, 0);
+    break;
+  case T_INC:
+    scan(&Token);
+    tree = prefix();
+
+    if (tree->op != A_IDENT)
+      fatal("++ operator must be followed by an identifier");
+
+    tree = mkastunary(A_PREINC, tree->type, tree, 0);
+    break;
+  case T_DEC:
+    scan(&Token);
+    tree = prefix();
+
+    if (tree->op != A_IDENT)
+      fatal("-- operator must be followed by an identifier");
+
+    tree = mkastunary(A_PREDEC, tree->type, tree, 0);
     break;
   default:
     tree = primary(); // Identifier or integer literal...
@@ -250,8 +310,10 @@ struct ASTnode *binexpr(int ptp) // `ptp`: previous token precedence
 
     tokentype = Token.token; // Update details of current token
     if (tokentype == T_SEMI || tokentype == T_RPAREN || tokentype == T_RBRACKET)
+    {
       left->rvalue = 1;
-    return left;
+      return left;
+    }
   }
 
   // Return the current tree when current precedence <= previous precedence

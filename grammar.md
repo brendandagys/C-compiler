@@ -51,37 +51,47 @@
 
  return_statement: 'return' '(' expression ')'  ;
 
- prefix_expression: primary_expression
-    | '*' prefix_expression
-    | '&' prefix_expression
-    ;
-
  primary_expression
-    : identifier
-    | CONSTANT
-    | STRING_LITERAL
+    : T_IDENT
+    | T_INTLIT
+    | T_STRLIT
     | '(' expression ')'
     ;
 
  postfix_expression
     : primary_expression
     | postfix_expression '[' expression ']'
+    | postfix_expression '(' expression ')'
+    | postfix_expression '++'
+    | postfix_expression '--'
+    ;
 
- expression: additive_expression
+ prefix_expression
+    : postfix_expression
+    | '++' prefix_expression
+    | '--' prefix_expression
+    | prefix_operator prefix_expression
+    ;
+  
+ prefix_operator: '&' | '*' | '-' | '~' | '!'   ;
+
+ expression
+    : additive_expression
     | primary_expression
     | prefix_expression
     ;
 
- additive_expression:
-           multiplicative_expression
-    |      additive_expression '+' multiplicative_expression
-    |      additive_expression '-' multiplicative_expression
+ additive_expression
+    : multiplicative_expression
+    | additive_expression '+' multiplicative_expression
+    | additive_expression '-' multiplicative_expression
     ;
 
- multiplicative_expression:
-           number
-    |      number '*' multiplicative_expression
-    |      number '/' multiplicative_expression
+ multiplicative_expression
+    : prefix_expression
+    | multiplicative_expression '*' prefix_expression
+    | multiplicative_expression '/' prefix_expression
+    | multiplicative_expression '%' prefix_expression
     ;
 
  identifier: T_IDENT ;

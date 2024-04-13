@@ -18,7 +18,7 @@ static struct ASTnode *if_statement(void)
   condAST = binexpr(0);
 
   if (condAST->op < A_EQ || condAST->op > A_GE)
-    fatal("Bad comparison operator");
+    condAST = mkastunary(A_TOBOOL, condAST->type, condAST, 0);
   rparen();
 
   trueAST = compound_statement();
@@ -42,7 +42,7 @@ static struct ASTnode *while_statement(void)
 
   condAST = binexpr(0);
   if (condAST->op < A_EQ || condAST->op > A_GE)
-    fatal("Bad comparison operator");
+    condAST = mkastunary(A_TOBOOL, condAST->type, condAST, 0);
   rparen();
 
   bodyAST = compound_statement();
@@ -60,7 +60,7 @@ static struct ASTnode *for_statement(void)
   semi();
   condAST = binexpr(0);
   if (condAST->op < A_EQ || condAST->op > A_GE)
-    fatal("Bad comparison operator");
+    condAST = mkastunary(A_TOBOOL, condAST->type, condAST, 0);
   semi();
   postopAST = single_statement();
   rparen();

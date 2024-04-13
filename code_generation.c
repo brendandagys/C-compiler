@@ -118,6 +118,16 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
     return cgmul(leftreg, rightreg);
   case A_DIVIDE:
     return cgdiv(leftreg, rightreg);
+  case A_AND:
+    return cgand(leftreg, rightreg);
+  case A_OR:
+    return (cgor(leftreg, rightreg));
+  case A_XOR:
+    return (cgxor(leftreg, rightreg));
+  case A_LSHIFT:
+    return (cgshl(leftreg, rightreg));
+  case A_RSHIFT:
+    return (cgshr(leftreg, rightreg));
   case A_EQ:
   case A_NE:
   case A_LT:
@@ -137,7 +147,7 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
   case A_IDENT:
     // Load value if an r-value or are being dereferenced
     if (n->rvalue || parentASTop == A_DEREF)
-      return cgloadglob(n->v.id);
+      return cgloadglob(n->v.id, n->op);
     else
       return NOREG;
   case A_ASSIGN:
@@ -181,6 +191,25 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
       rightreg = cgloadint(n->v.size, P_INT);
       return cgmul(leftreg, rightreg);
     }
+  case A_POSTINC:
+    return (cgloadglob(n->v.id, n->op));
+  case A_POSTDEC:
+    return (cgloadglob(n->v.id, n->op));
+  case A_PREINC:
+    return (cgloadglob(n->left->v.id, n->op));
+  case A_PREDEC:
+    return (cgloadglob(n->left->v.id, n->op));
+  case A_NEGATE:
+    return (cgnegate(leftreg));
+  case A_INVERT:
+    return (cginvert(leftreg));
+  case A_LOGNOT:
+    return (cglognot(leftreg));
+  case A_TOBOOL:
+    // If the parent AST node is an `A_IF` or `A_WHILE`, generate
+    // a compare followed by a jump. Otherwise, set the register
+    // to 0 or 1 based on it's zero-ness or non-zero-ness.
+    return (cgboolean(leftreg, parentASTop, label));
   default:
     fatald("Unknown AST operator", n->op);
     __builtin_unreachable();
