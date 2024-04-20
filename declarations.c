@@ -39,9 +39,10 @@ int parse_type(void)
   return type; // Exit with next token already scanned
 }
 
-// Parse the declaration of a list of variables.
+// Parse the declaration of a scalar variable or an array with a given size.
 // The identifier has been scanned and we have the type.
-void variable_declaration(int type, int islocal)
+// `isparam`: If local variable is a function parameter
+void variable_declaration(int type, int islocal, int isparam)
 {
   if (Token.token == T_LBRACKET)
   {
@@ -50,9 +51,10 @@ void variable_declaration(int type, int islocal)
     if (Token.token == T_INTLIT)
     {
       // Add as a known array and generate its space in assembly. Treat as a pointer to its elements' type.
-      islocal
-          ? addlocal(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue) // `intvalue` is length
-          : addglobal(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue);
+      if (islocal)
+        fatal("For now, declaration of local arrays is not implemented");
+
+      addglobal(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue);
     }
 
     scan(&Token);
@@ -60,28 +62,43 @@ void variable_declaration(int type, int islocal)
   }
   else
   {
-    while (1)
+    if (islocal)
     {
-      islocal
-          ? addlocal(Text, type, S_VARIABLE, 0, 1) // Text contains last identifier, via `scanident()`
-          : addglobal(Text, type, S_VARIABLE, 0, 1);
+      if (addlocal(Text, type, S_VARIABLE, isparam, 1) == -1) // Text contains last identifier, via `scanident()`
+        fatals("Duplicate local variable declaration", Text);
+    }
+    else
+      addglobal(Text, type, S_VARIABLE, 0, 1);
+  }
+}
 
-      if (Token.token == T_SEMI)
-      {
-        scan(&Token);
-        return;
-      }
+// Parse the parameters in parentheses after a function name.
+// Add them as symbols to the symbol table and return the number of parameters.
+static int param_declaration(void)
+{
+  int type;
+  int numparams = 0;
 
-      if (Token.token == T_COMMA)
-      {
-        scan(&Token);
-        ident();
-        continue;
-      }
+  while (Token.token != T_RPAREN)
+  {
+    type = parse_type();
+    ident();
+    variable_declaration(type, 1, 1);
+    numparams++;
 
-      fatal("Missing `,` or `;` after identifier");
+    switch (Token.token)
+    {
+    case T_COMMA:
+      scan(&Token);
+      break;
+    case T_RPAREN:
+      break;
+    default:
+      fatald("Unexpected token in parameter list: expecting , or )", Token.token);
     }
   }
+
+  return numparams;
 }
 
 // Parse the declaration of a function.
@@ -89,17 +106,17 @@ void variable_declaration(int type, int islocal)
 struct ASTnode *function_declaration(int type)
 {
   struct ASTnode *tree, *finalstatement;
-  int nameslot, endlabel;
+  int index, endlabel, paramcount;
 
   // Get a label ID for the end label, add the function to the symbol table,
   // and set the `Functionid` global to the function's symbol table index
   endlabel = genlabel();
-  nameslot = addglobal(Text, type, S_FUNCTION, endlabel, 0);
-  Functionid = nameslot;
-
-  genresetlocals(); // Reset position of new locals
+  index = addglobal(Text, type, S_FUNCTION, endlabel, 0);
+  Functionid = index;
 
   lparen();
+  paramcount = param_declaration();
+  Symtable[index].numelems = paramcount;
   rparen();
 
   tree = compound_statement();
@@ -116,7 +133,7 @@ struct ASTnode *function_declaration(int type)
       fatal("No `return` for function with non-void type");
   }
 
-  return mkastunary(A_FUNCTION, type, tree, nameslot);
+  return mkastunary(A_FUNCTION, type, tree, index);
 }
 
 // Parse one or more global declarations, either variables or functions
@@ -140,11 +157,14 @@ void global_declarations(void)
         fprintf(stdout, "\n\n");
       }
 
-      genAST(tree, NOREG, 0);
+      genAST(tree, NOLABEL, 0);
+
+      freelocalsymbols();
     }
     else
     {
-      variable_declaration(type, 0);
+      variable_declaration(type, 0, 0);
+      semi();
     }
 
     if (Token.token == T_EOF)

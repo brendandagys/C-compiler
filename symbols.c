@@ -14,6 +14,8 @@ int findglobal(char *s)
 {
   for (int i = 0; i < Globals; i++)
   {
+    if (Symtable[i].class == C_PARAM)
+      continue;
     if (*s == *Symtable[i].name && !strcmp(s, Symtable[i].name))
       return i;
   }
@@ -55,6 +57,12 @@ static int newlocal(void)
   return p;
 }
 
+// Clear all entries in the local symbol table
+void freelocalsymbols(void)
+{
+  Locals = NSYMBOLS - 1;
+}
+
 // Update a symbol at the given slot number in the symbol table. Set up its:
 // - type: char, int etc.
 // - structural type: var, function, array etc.
@@ -79,8 +87,8 @@ static void updatesymbol(
 // Add a global symbol to the symbol table and return its index. Set up its:
 // - type: char, int etc.
 // - structural type: var, function, array etc.
-// - size: number of elements
 // - endlabel: if this is a function
+// - size: number of elements
 int addglobal(char *name, int type, int stype, int endlabel, int size)
 {
   int slot;
@@ -90,28 +98,38 @@ int addglobal(char *name, int type, int stype, int endlabel, int size)
 
   slot = newglobal();
   updatesymbol(slot, name, type, stype, C_GLOBAL, endlabel, size, 0);
-  genglobsym(slot);
+  genglobalsym(slot);
 
   return slot;
 }
 
-// Add a local symbol to the symbol table and return its index. Set up its:
+// Add a local symbol to the symbol table and return its index or -1 if duplicate.
+// Set up its:
 // - type: char, int etc.
 // - structural type: var, function, array etc.
 // - size: number of elements
-// - endlabel: if this is a function
-int addlocal(char *name, int type, int stype, int endlabel, int size)
+// - isparam: if true, this is a parameter to the function
+int addlocal(char *name, int type, int stype, int isparam, int size)
 {
-  int slot, position;
+  int localslot, globalslot;
 
-  if ((slot = findlocal(name)) != -1)
-    return slot;
+  if ((localslot = findlocal(name)) != -1)
+    return -1;
 
-  slot = newlocal();
-  position = gengetlocaloffset(type, 0); // 0 for now
-  updatesymbol(slot, name, type, stype, C_LOCAL, endlabel, size, position);
+  localslot = newlocal();
 
-  return slot;
+  if (isparam)
+  {
+    updatesymbol(localslot, name, type, stype, C_PARAM, 0, size, 0);
+    globalslot = newglobal();
+    updatesymbol(globalslot, name, type, stype, C_PARAM, 0, size, 0);
+  }
+  else
+  {
+    updatesymbol(localslot, name, type, stype, C_LOCAL, 0, size, 0);
+  }
+
+  return localslot;
 }
 
 // Determine if the symbol is in the symbol table. Return its index or -1.

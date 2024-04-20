@@ -121,7 +121,8 @@ static struct ASTnode *single_statement(void)
     // CURRENTLY THESE ARE GLOBALS.
     type = parse_type();
     ident();
-    variable_declaration(type, 1);
+    variable_declaration(type, 1, 0);
+    semi();
     return NULL; // No AST generated
   case T_IF:
     return if_statement();

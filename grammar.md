@@ -20,6 +20,10 @@
 
  function_declaration: type identifier '(' ')' compound_statement   ;
 
+ param_declaration: <null>
+      | variable_declaration
+      | variable_declaration ',' param_declaration
+
  variable_declaration: type identifier_list ';'
       | type identifier '[' P_INTLIT ']' ';'
       ;

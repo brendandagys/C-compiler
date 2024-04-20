@@ -161,6 +161,7 @@ enum
 {
   C_GLOBAL = 1, // Globally visible symbol
   C_LOCAL,      // Locally visible symbol
+  C_PARAM,      // Locally visible function parameter
 };
 
 // Symbol table structure
@@ -173,4 +174,5 @@ struct symtable
   int endlabel; // For `S_FUNCTION`, the end label
   int size;     // Number of elements in the symbol
   int position; // For locals, the negative offset from the stack base pointer
+  int numelems; // For functions, the number of parameters
 };

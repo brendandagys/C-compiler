@@ -226,7 +226,7 @@ void genpostamble(void) { cgpostamble(); }
 
 void genfreeregs(void) { freeall_registers(); }
 
-void genglobsym(int id) { cgglobalsym(id); }
+void genglobalsym(int id) { cgglobalsym(id); }
 
 int genglobalstr(char *strvalue)
 {
@@ -236,7 +236,3 @@ int genglobalstr(char *strvalue)
 }
 
 int genprimsize(int type) { return cgprimsize(type); }
-
-void genresetlocals(void) { cgresetlocals(); }
-
-int gengetlocaloffset(int type, int isparam) { return cggetlocaloffset(type, isparam); }

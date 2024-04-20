@@ -16,11 +16,9 @@ int genAST(struct ASTnode *n, int label, int parentASTop);
 void genpreamble(void);
 void genpostamble(void);
 void genfreeregs(void);
-void genglobsym(int id);
+void genglobalsym(int id);
 int genglobalstr(char *strvalue);
 int genprimsize(int type);
-void genresetlocals(void);
-int gengetlocaloffset(int type, int isparam);
 
 // `code_generation_x86-64.c`
 void cgtextseg();
@@ -63,8 +61,6 @@ int cgor(int r1, int r2);
 int cgxor(int r1, int r2);
 int cgshl(int r1, int r2);
 int cgshr(int r1, int r2);
-void cgresetlocals(void);
-int cggetlocaloffset(int type, int isparam);
 
 // `expressions.c`
 struct ASTnode *binexpr(int ptp);
@@ -90,10 +86,11 @@ int findglobal(char *s);
 int findlocal(char *s);
 int findsymbol(char *s);
 int addglobal(char *name, int type, int stype, int endlabel, int size);
-int addlocal(char *name, int type, int stype, int endlabel, int size);
+int addlocal(char *name, int type, int stype, int isparam, int size);
+void freelocalsymbols(void);
 
 // `declarations.c`
-void variable_declaration(int type, int islocal);
+void variable_declaration(int type, int islocal, int isparam);
 struct ASTnode *function_declaration(int type);
 void global_declarations(void);
 
