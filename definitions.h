@@ -156,12 +156,21 @@ enum
   S_ARRAY,
 };
 
+// Storage classes
+enum
+{
+  C_GLOBAL = 1, // Globally visible symbol
+  C_LOCAL,      // Locally visible symbol
+};
+
 // Symbol table structure
 struct symtable
 {
   char *name;   // Name of a symbol
   int type;     // Primitive type for the symbol
   int stype;    // Structural type for the symbol
+  int class;    // Storage class for the symbol
   int endlabel; // For `S_FUNCTION`, the end label
   int size;     // Number of elements in the symbol
+  int position; // For locals, the negative offset from the stack base pointer
 };

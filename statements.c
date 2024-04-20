@@ -87,14 +87,14 @@ static struct ASTnode *return_statement(void)
 {
   struct ASTnode *tree;
 
-  if (Gsym[Functionid].type == P_VOID)
+  if (Symtable[Functionid].type == P_VOID)
     fatal("Can't return from a `void` function");
 
   match(T_RETURN, "return");
   lparen();
 
   tree = binexpr(0);
-  tree = modify_type(tree, Gsym[Functionid].type, 0);
+  tree = modify_type(tree, Symtable[Functionid].type, 0);
 
   if (tree == NULL)
     fatal("Incompatible type to return");
@@ -121,7 +121,7 @@ static struct ASTnode *single_statement(void)
     // CURRENTLY THESE ARE GLOBALS.
     type = parse_type();
     ident();
-    variable_declaration(type);
+    variable_declaration(type, 1);
     return NULL; // No AST generated
   case T_IF:
     return if_statement();

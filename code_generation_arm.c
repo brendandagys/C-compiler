@@ -84,10 +84,10 @@ void cgpostamble()
 {
   // Print out the global variables
   fprintf(Outfile, ".L2:\n");
-  for (int i = 0; i < Globs; i++)
+  for (int i = 0; i < Globals; i++)
   {
-    if (Gsym[i].stype == S_VARIABLE)
-      fprintf(Outfile, "\t.word %s\n", Gsym[i].name);
+    if (Symtable[i].stype == S_VARIABLE)
+      fprintf(Outfile, "\t.word %s\n", Symtable[i].name);
   }
 
   // Print out the integer literals
@@ -101,7 +101,7 @@ void cgpostamble()
 // Print out a function preamble
 void cgfuncpreamble(int id)
 {
-  char *name = Gsym[id].name;
+  char *name = Symtable[id].name;
   fprintf(Outfile,
           "\t.text\n"
           "\t.globl\t%s\n"
@@ -117,7 +117,7 @@ void cgfuncpreamble(int id)
 // Print out a function postamble
 void cgfuncpostamble(int id)
 {
-  cglabel(Gsym[id].endlabel);
+  cglabel(Symtable[id].endlabel);
   fputs("\tsub\tsp, fp, #4\n"
         "\tpop\t{fp, pc}\n"
         "\t.align\t2\n",
@@ -148,7 +148,7 @@ static void set_var_offset(int id)
 
   for (int i = 0; i < id; i++)
   {
-    if (Gsym[i].stype == S_VARIABLE)
+    if (Symtable[i].stype == S_VARIABLE)
       offset += 4;
   }
 
@@ -156,7 +156,7 @@ static void set_var_offset(int id)
 }
 
 // Load a value from a variable into a register and return its number
-int cgloadglob(int id)
+int cgloadglobal(int id)
 {
   int r = alloc_register();
   set_var_offset(id);
@@ -207,7 +207,7 @@ int cgdiv(int r1, int r2)
 int cgcall(int r, int id)
 {
   fprintf(Outfile, "\tmov\tr0, %s\n", reglist[r]);
-  fprintf(Outfile, "\tbl\t%s\n", Gsym[id].name);
+  fprintf(Outfile, "\tbl\t%s\n", Symtable[id].name);
   fprintf(Outfile, "\tmov\t%s, r0\n", reglist[r]);
   return r;
 }
@@ -220,11 +220,11 @@ int cgshlconst(int r, int val)
 }
 
 // Store a register's value into a variable
-int cgstorglob(int r, int id)
+int cgstoreglobal(int r, int id)
 {
   set_var_offset(id);
 
-  switch (Gsym[id].type)
+  switch (Symtable[id].type)
   {
   case P_CHAR:
     fprintf(Outfile, "\tstrb\t%s, [r3]\n", reglist[r]);
@@ -234,7 +234,7 @@ int cgstorglob(int r, int id)
     fprintf(Outfile, "\tstr\t%s, [r3]\n", reglist[r]);
     break;
   default:
-    fatald("Bad type in `cgstorglob()`", Gsym[id].type);
+    fatald("Bad type in `cgstoreglobal()`", Symtable[id].type);
   }
 
   return r;
@@ -253,24 +253,24 @@ int cgprimsize(int type)
 }
 
 // Generate a global symbol
-void cgglobsym(int id)
+void cgglobalsym(int id)
 {
-  int typesize = cgprimsize(Gsym[id].type);
+  int typesize = cgprimsize(Symtable[id].type);
 
   fprintf(Outfile, "\t.data\n"
                    "\t.globl\t%s\n",
-          Gsym[id].name);
+          Symtable[id].name);
 
   switch (typesize)
   {
   case 1:
-    fprintf(Outfile, "%s:\t.byte\t0\n", Gsym[id].name);
+    fprintf(Outfile, "%s:\t.byte\t0\n", Symtable[id].name);
     break;
   case 4:
-    fprintf(Outfile, "%s:\t.long\t0\n", Gsym[id].name);
+    fprintf(Outfile, "%s:\t.long\t0\n", Symtable[id].name);
     break;
   default:
-    fatald("Unknown typesize in cgglobsym: ", typesize);
+    fatald("Unknown typesize in cgglobalsym: ", typesize);
   }
 }
 
@@ -332,7 +332,7 @@ int cgwiden(int r, int oldtype, int newtype)
 void cgreturn(int reg, int id)
 {
   fprintf(Outfile, "\tmov\tr0, %s\n", reglist[reg]);
-  cgjump(Gsym[id].endlabel);
+  cgjump(Symtable[id].endlabel);
 }
 
 // Generate code to load the address of a global identifier into

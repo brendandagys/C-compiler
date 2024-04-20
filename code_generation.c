@@ -121,13 +121,13 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
   case A_AND:
     return cgand(leftreg, rightreg);
   case A_OR:
-    return (cgor(leftreg, rightreg));
+    return cgor(leftreg, rightreg);
   case A_XOR:
-    return (cgxor(leftreg, rightreg));
+    return cgxor(leftreg, rightreg);
   case A_LSHIFT:
-    return (cgshl(leftreg, rightreg));
+    return cgshl(leftreg, rightreg);
   case A_RSHIFT:
-    return (cgshr(leftreg, rightreg));
+    return cgshr(leftreg, rightreg);
   case A_EQ:
   case A_NE:
   case A_LT:
@@ -143,11 +143,13 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
   case A_INTLIT:
     return cgloadint(n->v.intvalue, n->type);
   case A_STRLIT:
-    return cgloadglobstr(n->v.id);
+    return cgloadglobalstr(n->v.id);
   case A_IDENT:
     // Load value if an r-value or are being dereferenced
     if (n->rvalue || parentASTop == A_DEREF)
-      return cgloadglob(n->v.id, n->op);
+      return (Symtable[n->v.id].class == C_LOCAL)
+                 ? cgloadlocal(n->v.id, n->op)
+                 : cgloadglobal(n->v.id, n->op);
     else
       return NOREG;
   case A_ASSIGN:
@@ -155,7 +157,9 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
     switch (n->right->op)
     {
     case A_IDENT:
-      return cgstorglob(leftreg, n->right->v.id);
+      return (Symtable[n->right->v.id].class == C_LOCAL)
+                 ? cgstorlocal(leftreg, n->right->v.id)
+                 : cgstoreglobal(leftreg, n->right->v.id);
     case A_DEREF:
       return cgstorderef(leftreg, rightreg, n->right->type);
     default:
@@ -192,13 +196,13 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
       return cgmul(leftreg, rightreg);
     }
   case A_POSTINC:
-    return (cgloadglob(n->v.id, n->op));
+    return (cgloadglobal(n->v.id, n->op));
   case A_POSTDEC:
-    return (cgloadglob(n->v.id, n->op));
+    return (cgloadglobal(n->v.id, n->op));
   case A_PREINC:
-    return (cgloadglob(n->left->v.id, n->op));
+    return (cgloadglobal(n->left->v.id, n->op));
   case A_PREDEC:
-    return (cgloadglob(n->left->v.id, n->op));
+    return (cgloadglobal(n->left->v.id, n->op));
   case A_NEGATE:
     return (cgnegate(leftreg));
   case A_INVERT:
@@ -209,7 +213,7 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
     // If the parent AST node is an `A_IF` or `A_WHILE`, generate
     // a compare followed by a jump. Otherwise, set the register
     // to 0 or 1 based on it's zero-ness or non-zero-ness.
-    return (cgboolean(leftreg, parentASTop, label));
+    return cgboolean(leftreg, parentASTop, label);
   default:
     fatald("Unknown AST operator", n->op);
     __builtin_unreachable();
@@ -222,13 +226,17 @@ void genpostamble(void) { cgpostamble(); }
 
 void genfreeregs(void) { freeall_registers(); }
 
-void genglobsym(int id) { cgglobsym(id); }
+void genglobsym(int id) { cgglobalsym(id); }
 
-int genglobstr(char *strvalue)
+int genglobalstr(char *strvalue)
 {
   int l = genlabel();
-  cgglobstr(l, strvalue);
+  cgglobalstr(l, strvalue);
   return l;
 }
 
 int genprimsize(int type) { return cgprimsize(type); }
+
+void genresetlocals(void) { cgresetlocals(); }
+
+int gengetlocaloffset(int type, int isparam) { return cggetlocaloffset(type, isparam); }

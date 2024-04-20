@@ -12,17 +12,8 @@ SRCS= \
 	types.c
 
 ARM_SRCS= \
-	code_generation_arm.c \
-	declarations.c \
-	expressions.c \
-	code_generation.c \
-	main.c \
-	miscellaneous.c \
-	scanner.c \
-	statements.c \
-	symbols.c \
-	tree.c \
-	types.c
+	code_generation_arm.c	declarations.c expressions.c code_generation.c \
+	main.c miscellaneous.c scanner.c statements.c symbols.c tree.c types.c
 
 # COMPILE
 bin/b: $(SRCS)
@@ -39,13 +30,8 @@ test-arm: bin/b-arm tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
 # LAST TEST
-test24: bin/b tests/input24 lib/printint.c
-	bin/b tests/input24
-	cc -o out out.s lib/printint.c
-	./out
-
-test24-arm: bin/b-arm tests/input24 lib/printint.c
-	bin/b tests/input24
+test25: bin/b tests/input25 lib/printint.c
+	bin/b tests/input25
 	cc -o out out.s lib/printint.c
 	./out
 

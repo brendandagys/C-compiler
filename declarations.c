@@ -41,10 +41,8 @@ int parse_type(void)
 
 // Parse the declaration of a list of variables.
 // The identifier has been scanned and we have the type.
-void variable_declaration(int type)
+void variable_declaration(int type, int islocal)
 {
-  int id;
-
   if (Token.token == T_LBRACKET)
   {
     scan(&Token);
@@ -52,8 +50,9 @@ void variable_declaration(int type)
     if (Token.token == T_INTLIT)
     {
       // Add as a known array and generate its space in assembly. Treat as a pointer to its elements' type.
-      id = addglob(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue);
-      genglobsym(id);
+      islocal
+          ? addlocal(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue) // `intvalue` is length
+          : addglobal(Text, pointer_to(type), S_ARRAY, 0, Token.intvalue);
     }
 
     scan(&Token);
@@ -63,8 +62,9 @@ void variable_declaration(int type)
   {
     while (1)
     {
-      id = addglob(Text, type, S_VARIABLE, 0, 1); // Text contains last identifier, via `scanident()`
-      genglobsym(id);
+      islocal
+          ? addlocal(Text, type, S_VARIABLE, 0, 1) // Text contains last identifier, via `scanident()`
+          : addglobal(Text, type, S_VARIABLE, 0, 1);
 
       if (Token.token == T_SEMI)
       {
@@ -94,8 +94,10 @@ struct ASTnode *function_declaration(int type)
   // Get a label ID for the end label, add the function to the symbol table,
   // and set the `Functionid` global to the function's symbol table index
   endlabel = genlabel();
-  nameslot = addglob(Text, type, S_FUNCTION, endlabel, 0);
+  nameslot = addglobal(Text, type, S_FUNCTION, endlabel, 0);
   Functionid = nameslot;
+
+  genresetlocals(); // Reset position of new locals
 
   lparen();
   rparen();
@@ -142,7 +144,7 @@ void global_declarations(void)
     }
     else
     {
-      variable_declaration(type);
+      variable_declaration(type, 0);
     }
 
     if (Token.token == T_EOF)

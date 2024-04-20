@@ -17,27 +17,33 @@ void genpreamble(void);
 void genpostamble(void);
 void genfreeregs(void);
 void genglobsym(int id);
-int genglobstr(char *strvalue);
+int genglobalstr(char *strvalue);
 int genprimsize(int type);
+void genresetlocals(void);
+int gengetlocaloffset(int type, int isparam);
 
 // `code_generation_x86-64.c`
+void cgtextseg();
+void cgdataseg();
 void freeall_registers(void);
 void cgpreamble(void);
 void cgpostamble(void);
 void cgfuncpreamble(int id);
 void cgfuncpostamble(int id);
 int cgloadint(int value, int type);
-int cgloadglob(int id, int op);
-int cgloadglobstr(int id);
+int cgloadglobal(int id, int op);
+int cgloadlocal(int id, int op);
+int cgloadglobalstr(int id);
 int cgadd(int r1, int r2);
 int cgsub(int r1, int r2);
 int cgmul(int r1, int r2);
 int cgdiv(int r1, int r2);
 int cgshlconst(int r, int val);
 int cgcall(int r, int id);
-int cgstorglob(int r, int id);
-void cgglobsym(int id);
-void cgglobstr(int l, char *strvalue);
+int cgstoreglobal(int r, int id);
+int cgstorlocal(int r, int id);
+void cgglobalsym(int id);
+void cgglobalstr(int l, char *strvalue);
 int cgcompare_and_set(int ASTop, int r1, int r2);
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label);
 void cglabel(int l);
@@ -57,6 +63,8 @@ int cgor(int r1, int r2);
 int cgxor(int r1, int r2);
 int cgshl(int r1, int r2);
 int cgshr(int r1, int r2);
+void cgresetlocals(void);
+int cggetlocaloffset(int type, int isparam);
 
 // `expressions.c`
 struct ASTnode *binexpr(int ptp);
@@ -78,11 +86,14 @@ void fatald(char *s, int d);
 void fatalc(char *s, int c);
 
 // `symbols.c`
-int findglob(char *s);
-int addglob(char *name, int type, int stype, int endlabel, int size);
+int findglobal(char *s);
+int findlocal(char *s);
+int findsymbol(char *s);
+int addglobal(char *name, int type, int stype, int endlabel, int size);
+int addlocal(char *name, int type, int stype, int endlabel, int size);
 
 // `declarations.c`
-void variable_declaration(int type);
+void variable_declaration(int type, int islocal);
 struct ASTnode *function_declaration(int type);
 void global_declarations(void);
 
