@@ -7,7 +7,7 @@
 // 0xxxx......................................xxxxxxxxxxxxNSYMBOLS-1
 //      ^                                    ^
 //      |                                    |
-//    Globals                              Locals
+//    Globals                              Locals/Parameters
 
 // Determine if a symbol is in the global symbol table. Return its index or -1.
 int findglobal(char *s)
