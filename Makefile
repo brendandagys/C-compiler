@@ -30,8 +30,8 @@ test-arm: bin/b-arm tests/runtests
 	(cd tests; chmod +x runtests; ./runtests)
 
 # LAST TEST
-test25: bin/b tests/input25 lib/printint.c
-	bin/b tests/input25
+test26: bin/b tests/input26 lib/printint.c
+	bin/b tests/input26
 	cc -o out out.s lib/printint.c
 	./out
 
