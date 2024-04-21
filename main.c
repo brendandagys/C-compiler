@@ -10,8 +10,7 @@
 // Compiler set-up and top-level execution
 
 // Initialize global variables
-static void init()
-{
+static void init() {
   Line = 1;
   Putback = '\n';
   Globals = 0;
@@ -20,33 +19,28 @@ static void init()
 }
 
 // Print instructions if program arguments are incorrect
-static void usage(char *prog)
-{
+static void usage(char *prog) {
   fprintf(stderr, "Usage: %s [-T] infile\n", prog);
   exit(1);
 }
 
 // Open/scan the file and its tokens
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   int i;
 
-  init(); // Initialize globals
+  init();  // Initialize globals
 
   // Scan for command-line options
-  for (i = 1; i < argc; i++)
-  {
-    if (*argv[i] != '-')
-      break;
-    for (int j = 1; argv[i][j]; j++)
-    {
-      switch (argv[i][j])
-      {
-      case 'T':
-        O_dumpAST = 1;
-        break;
-      default:
-        usage(argv[0]);
+  for (i = 1; i < argc; i++) {
+    if (*argv[i] != '-') break;
+
+    for (int j = 1; argv[i][j]; j++) {
+      switch (argv[i][j]) {
+        case 'T':
+          O_dumpAST = 1;
+          break;
+        default:
+          usage(argv[0]);
       }
     }
   }
@@ -55,14 +49,12 @@ int main(int argc, char *argv[])
   if (i >= argc)
     usage(argv[0]);
 
-  if ((Infile = fopen(argv[i], "r")) == NULL)
-  {
+  if ((Infile = fopen(argv[i], "r")) == NULL) {
     fprintf(stderr, "Unable to open %s: %s\n", argv[i], strerror(errno));
     exit(1);
   }
 
-  if ((Outfile = fopen("out.s", "w")) == NULL)
-  {
+  if ((Outfile = fopen("out.s", "w")) == NULL) {
     fprintf(stderr, "Unable to create `out.s`: %s\n", strerror(errno));
     exit(1);
   }
@@ -71,9 +63,9 @@ int main(int argc, char *argv[])
   addglobal("printint", P_INT, S_FUNCTION, 0, 0);
   addglobal("printchar", P_VOID, S_FUNCTION, 0, 0);
 
-  scan(&Token); // Get the first token from the input
+  scan(&Token);  // Get the first token from the input
   genpreamble();
-  global_declarations(); // Parse the global declarations
+  global_declarations();  // Parse the global declarations
   genpostamble();
 
   fclose(Infile);

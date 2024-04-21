@@ -10,10 +10,8 @@
 //    Globals                              Locals/Parameters
 
 // Determine if a symbol is in the global symbol table. Return its index or -1.
-int findglobal(char *s)
-{
-  for (int i = 0; i < Globals; i++)
-  {
+int findglobal(char *s) {
+  for (int i = 0; i < Globals; i++) {
     if (Symtable[i].class == C_PARAM)
       continue;
     if (*s == *Symtable[i].name && !strcmp(s, Symtable[i].name))
@@ -24,8 +22,7 @@ int findglobal(char *s)
 }
 
 // Get the index of a new global symbol; terminate if no more positions
-static int newglobal(void)
-{
+static int newglobal(void) {
   int p;
 
   if ((p = Globals++) >= Locals)
@@ -35,10 +32,8 @@ static int newglobal(void)
 }
 
 // Determine if a symbol is in the local symbol table. Return its index or -1.
-int findlocal(char *s)
-{
-  for (int i = Locals + 1; i < NSYMBOLS; i++)
-  {
+int findlocal(char *s) {
+  for (int i = Locals + 1; i < NSYMBOLS; i++) {
     if (*s == *Symtable[i].name && !strcmp(s, Symtable[i].name))
       return i;
   }
@@ -47,8 +42,7 @@ int findlocal(char *s)
 }
 
 // Get the index of a new local symbol; terminate if no more positions
-static int newlocal(void)
-{
+static int newlocal(void) {
   int p;
 
   if ((p = Locals--) <= Globals)
@@ -58,8 +52,7 @@ static int newlocal(void)
 }
 
 // Clear all entries in the local symbol table
-void freelocalsymbols(void)
-{
+void freelocalsymbols(void) {
   Locals = NSYMBOLS - 1;
 }
 
@@ -71,8 +64,7 @@ void freelocalsymbols(void)
 // - size: number of elements
 // - position: Position information for local symbols
 static void updatesymbol(
-    int slot, char *name, int type, int stype, int class, int endlabel, int size, int position)
-{
+    int slot, char *name, int type, int stype, int class, int endlabel, int size, int position) {
   if (slot < 0 || slot >= NSYMBOLS)
     fatal("Invalid symbol slot number in `updatesymbol()`");
   Symtable[slot].name = strdup(name);
@@ -89,8 +81,7 @@ static void updatesymbol(
 // - structural type: var, function, array etc.
 // - endlabel: if this is a function
 // - size: number of elements
-int addglobal(char *name, int type, int stype, int endlabel, int size)
-{
+int addglobal(char *name, int type, int stype, int endlabel, int size) {
   int slot;
 
   if ((slot = findglobal(name)) != -1)
@@ -109,8 +100,7 @@ int addglobal(char *name, int type, int stype, int endlabel, int size)
 // - structural type: var, function, array etc.
 // - size: number of elements
 // - isparam: if true, this is a parameter to the function
-int addlocal(char *name, int type, int stype, int isparam, int size)
-{
+int addlocal(char *name, int type, int stype, int isparam, int size) {
   int localslot, globalslot;
 
   if ((localslot = findlocal(name)) != -1)
@@ -118,14 +108,11 @@ int addlocal(char *name, int type, int stype, int isparam, int size)
 
   localslot = newlocal();
 
-  if (isparam)
-  {
+  if (isparam) {
     updatesymbol(localslot, name, type, stype, C_PARAM, 0, size, 0);
     globalslot = newglobal();
     updatesymbol(globalslot, name, type, stype, C_PARAM, 0, size, 0);
-  }
-  else
-  {
+  } else {
     updatesymbol(localslot, name, type, stype, C_LOCAL, 0, size, 0);
   }
 
@@ -133,8 +120,7 @@ int addlocal(char *name, int type, int stype, int isparam, int size)
 }
 
 // Determine if the symbol is in the symbol table. Return its index or -1.
-int findsymbol(char *s)
-{
+int findsymbol(char *s) {
   int slot = findlocal(s);
 
   if (slot == -1)
