@@ -72,6 +72,30 @@ static int genWHILE(struct ASTnode *n)
   return NOREG;
 }
 
+// Generate code to copy the arguments of a function call to its parameters.
+// Then, call the function itself. Return the register with the return value.
+static int gen_funccall(struct ASTnode *n)
+{
+  struct ASTnode *gluetree = n->left;
+  int reg, numargs = 0;
+
+  // If there's a list of arguments, walk it from the last argument (right child) to the first
+  while (gluetree)
+  {
+    reg = genAST(gluetree->right, NOLABEL, gluetree->op);
+    cgcopyarg(reg, gluetree->v.size);
+
+    if (numargs == 0) // Keep the first (highest) number of arguments
+      numargs = gluetree->v.size;
+
+    genfreeregs();
+    gluetree = gluetree->left;
+  }
+
+  // Call the function, clean up the stack (based on number of arguments), and return its result
+  return cgcall(n->v.id, numargs);
+}
+
 // Given an AST node, the register (if any) holding the previous rvalue, and the
 // AST op of the parent, recursively generate assembly code. Return the register
 // with the final tree value.
@@ -86,6 +110,8 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
     return genIF(n);
   case A_WHILE:
     return genWHILE(n);
+  case A_FUNCCALL:
+    return gen_funccall(n);
   case A_GLUE:
     // Do each child statement. Free the registers after each child.
     genAST(n->left, NOLABEL, n->op);
@@ -171,8 +197,6 @@ int genAST(struct ASTnode *n, int label, int parentASTop)
   case A_RETURN:
     cgreturn(leftreg, Functionid);
     return NOREG;
-  case A_FUNCCALL:
-    return cgcall(leftreg, n->v.id);
   case A_ADDR:
     return cgaddress(n->v.id);
   case A_DEREF:

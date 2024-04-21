@@ -459,17 +459,42 @@ int cgboolean(int r, int op, int label)
   return r;
 }
 
-// Call a function with one argument from the given register. Return register with result.
-// Argument values goes into `%rdi`; return value comes from `%rax`.
-int cgcall(int r, int id)
+// Call a function with the given symbol ID.
+// Pop off any arguments pushed onto the stack.
+// Return register with result (comes from `%rax`).
+int cgcall(int id, int numargs)
 {
-  // Get a new register
   int outr = alloc_register();
-  fprintf(Outfile, "\tmovq\t%s, %%rdi\n", reglist[r]);
   fprintf(Outfile, "\tcall\t%s\n", Symtable[id].name);
+
+  // Pop off any arguments pushed onto the stack
+  if (numargs > 6)
+    fprintf(Outfile, "\taddq\t$%d, %%rsp\n", 8 * (numargs - 6));
+
   fprintf(Outfile, "\tmovq\t%%rax, %s\n", reglist[outr]);
-  free_register(r);
+
   return outr;
+}
+
+// Given a register with an argument value, copy this argument into the argposition'th
+// parameter in preparation for a future function call. Note that argposition is 1-based.
+void cgcopyarg(int r, int argposition)
+{
+  // If > sixth argument, simply push the register onto the stack. We rely on being
+  // called with successive arguments in the correct order for x86-64
+  if (argposition > 6)
+  {
+    fprintf(Outfile, "\tpushq\t%s\n", reglist[r]);
+  }
+  else
+  {
+    // Otherwise, copy the value into one of the 6 registers used to hold parameter values
+    fprintf(
+        Outfile,
+        "\tmovq\t%s, %s\n",
+        reglist[r],
+        reglist[FIRSTPARAMREG - argposition + 1]);
+  }
 }
 
 // Shift a register left by a constant

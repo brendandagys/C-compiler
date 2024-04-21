@@ -18,7 +18,12 @@
 
  global_declaration: function_declaration | variable_declaration   ;
 
- function_declaration: type identifier '(' ')' compound_statement   ;
+ function_declaration: type identifier '(' expression_list ')' compound_statement   ;
+
+ expression_list: <null>
+      | expression
+      | expression ',' expression_list
+      ;
 
  param_declaration: <null>
       | variable_declaration

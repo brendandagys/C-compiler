@@ -4,7 +4,40 @@
 
 // Parsing of expressions with Pratt parsing
 
-// Parse a function call with a single expression argument. Return its AST.
+// Parse a list of 0+ comma-separated expressions and return an AST composed of
+// `A_GLUE` nodes, with the left-hand child being the sub-tree of previous
+// expressions (or NULL), and the right-hand child being the next expression.
+// Each `A_GLUE` node will have its size field set to the number of expressions
+// in the tree at this point. If no expressions are parsed, NULL is returned.
+static struct ASTnode *expression_list(void)
+{
+  struct ASTnode *tree = NULL;
+  struct ASTnode *child = NULL;
+  int exprcount = 0;
+
+  while (Token.token != T_RPAREN)
+  {
+    child = binexpr(0);
+    exprcount++;
+
+    tree = mkastnode(A_GLUE, P_NONE, tree, NULL, child, exprcount);
+
+    switch (Token.token)
+    {
+    case T_COMMA:
+      scan(&Token);
+      break;
+    case T_RPAREN:
+      break;
+    default:
+      fatald("Unexpected token in expression list", Token.token);
+    }
+  }
+
+  return tree;
+}
+
+// Parse a function call and return its AST
 static struct ASTnode *funccall(void)
 {
   struct ASTnode *tree;
@@ -21,7 +54,10 @@ static struct ASTnode *funccall(void)
   }
 
   lparen();
-  tree = binexpr(0);
+  tree = expression_list();
+
+  // TODO: Check type of each argument against the function's prototype
+
   tree = mkastunary(A_FUNCCALL, Symtable[id].type, tree, id);
   rparen();
   return tree;
