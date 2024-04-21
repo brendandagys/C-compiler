@@ -177,7 +177,7 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
                      ? cgstorlocal(leftreg, n->right->v.id)
                      : cgstoreglobal(leftreg, n->right->v.id);
         case A_DEREF:
-          return cgstorderef(leftreg, rightreg, n->right->type);
+          return cgstorederef(leftreg, rightreg, n->right->type);
         default:
           fatald("Can't `A_ASSIGN` in `genAST()`, op", n->op);
       }
@@ -209,19 +209,19 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
           return cgmul(leftreg, rightreg);
       }
     case A_POSTINC:
-      return (cgloadglobal(n->v.id, n->op));
+      return cgloadglobal(n->v.id, n->op);
     case A_POSTDEC:
-      return (cgloadglobal(n->v.id, n->op));
+      return cgloadglobal(n->v.id, n->op);
     case A_PREINC:
-      return (cgloadglobal(n->left->v.id, n->op));
+      return cgloadglobal(n->left->v.id, n->op);
     case A_PREDEC:
-      return (cgloadglobal(n->left->v.id, n->op));
+      return cgloadglobal(n->left->v.id, n->op);
     case A_NEGATE:
-      return (cgnegate(leftreg));
+      return cgnegate(leftreg);
     case A_INVERT:
-      return (cginvert(leftreg));
+      return cginvert(leftreg);
     case A_LOGNOT:
-      return (cglognot(leftreg));
+      return cglognot(leftreg);
     case A_TOBOOL:
       // If the parent AST node is an `A_IF` or `A_WHILE`, generate
       // a compare followed by a jump. Otherwise, set the register

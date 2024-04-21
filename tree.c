@@ -44,7 +44,7 @@ struct ASTnode *mkastunary(int op, int type, struct ASTnode *left, int intvalue)
 // just for AST dumping purposes
 static int gendumplabel(void) {
   static int id = 1;
-  return (id++);
+  return id++;
 }
 
 // Given an AST tree, print it out and follow the

@@ -598,11 +598,9 @@ int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
   return NOREG;
 }
 
-// Widen the value in the register from the old to the new type and return the
-// register with the new value
+// Widen value in the register from old to new type and return register with the new value
 int cgwiden(int r, int oldtype, int newtype) {
-  // Nothing to do
-  return r;
+  return r;  // Nothing to do
 }
 
 // Generate code to return a value from a function
@@ -624,8 +622,7 @@ void cgreturn(int reg, int id) {
   cgjump(Symtable[id].endlabel);
 }
 
-// Generate code to load the address of a global identifier into
-// a variable. Return a new register.
+// Load the address of a global identifier into a variable. Return a new register.
 int cgaddress(int id) {
   int r = alloc_register();
 
@@ -657,7 +654,7 @@ int cgderef(int r, int type) {
 }
 
 // Store through a dereferenced pointer
-int cgstorderef(int r1, int r2, int type) {
+int cgstorederef(int r1, int r2, int type) {
   switch (type) {
     case P_CHAR:
       fprintf(Outfile, "\tmovb\t%s, (%s)\n", breglist[r1], reglist[r2]);

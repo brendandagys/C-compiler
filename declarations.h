@@ -52,7 +52,7 @@ int cgprimsize(int type);
 void cgreturn(int reg, int id);
 int cgaddress(int id);
 int cgderef(int r, int type);
-int cgstorderef(int r1, int r2, int type);
+int cgstorederef(int r1, int r2, int type);
 int cgnegate(int r);
 int cginvert(int r);
 int cglognot(int r);
