@@ -142,9 +142,7 @@ struct ASTnode *compound_statement(void) {
     tree = single_statement();
 
     // Some statements must be followed by a semicolon
-    if (tree != NULL && (tree->op == A_ASSIGN ||
-                         tree->op == A_RETURN ||
-                         tree->op == A_FUNCCALL))
+    if (tree != NULL && (tree->op == A_ASSIGN || tree->op == A_RETURN || tree->op == A_FUNCCALL))
       semi();
 
     // For each new tree, either save it in left (if empty), or glue current
