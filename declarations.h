@@ -86,12 +86,13 @@ void fatalc(char *s, int c);
 int findglobal(char *s);
 int findlocal(char *s);
 int findsymbol(char *s);
-int addglobal(char *name, int type, int stype, int endlabel, int size);
-int addlocal(char *name, int type, int stype, int isparam, int size);
+int addglobal(char *name, int type, int stype, int class, int endlabel, int size);
+int addlocal(char *name, int type, int stype, int class, int size);
+void copyfuncparams(int slot);
 void freelocalsymbols(void);
 
 // `declarations.c`
-void variable_declaration(int type, int islocal, int isparam);
+void variable_declaration(int type, int class);
 struct ASTnode *function_declaration(int type);
 void global_declarations(void);
 

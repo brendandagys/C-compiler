@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
   }
 
   // For now, ensure that `void printint()` is defined
-  addglobal("printint", P_INT, S_FUNCTION, 0, 0);
-  addglobal("printchar", P_VOID, S_FUNCTION, 0, 0);
+  addglobal("printint", P_INT, S_FUNCTION, C_GLOBAL, 0, 0);
+  addglobal("printchar", P_VOID, S_FUNCTION, C_GLOBAL, 0, 0);
 
   scan(&Token);  // Get the first token from the input
   genpreamble();
